@@ -81,6 +81,8 @@ Near-term, in priority order:
 
 Longer-term ideas (unvalidated): wearable data, a lightweight mobile view, and a version of the "one dashboard" idea that isn't student-specific. These are directions, not commitments — validation comes first.
 
+See [docs/research-plan.md](docs/research-plan.md) for the full validation plan.
+
 ## Skills Demonstrated
 
 **Product:** product thinking, product strategy, feature prioritization, roadmapping
