@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudentOS — Your life, one system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+/* ============ TOKENS ============ */
+:root {
+  --font-ui: "Instrument Sans", -apple-system, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* module signal hues (shared across themes) */
+  --hue-health: #F0648C;
+  --hue-sleep: #7C8CF8;
+  --hue-nutrition: #4FC97B;
+  --hue-workout: #F59E0B;
+  --hue-finance: #2DD4BF;
+  --hue-study: #A78BFA;
+  --hue-habits: #E8B93B;
+  --hue-goals: #38BDF8;
+  --hue-coach: #E879F9;
+  --hue-notes: #84CC16;
+  --hue-calendar: #FB7185;
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+  --sidebar-w: 232px;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0B0D11;
+  --surface: #12151B;
+  --surface-2: #181C24;
+  --surface-hover: #1D222B;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.13);
+  --text: #E7EAF0;
+  --text-2: #9AA3B2;
+  --text-3: #626B7A;
+  --accent: #7C7FF2;
+  --accent-soft: rgba(124,127,242,0.14);
+  --pos: #4FC97B;
+  --neg: #F0648C;
+  --chart-grid: rgba(255,255,255,0.05);
+  --shadow: 0 8px 28px rgba(0,0,0,0.4);
+  --statusbar-bg: rgba(11,13,17,0.85);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --surface-2: #F1F3F6;
+  --surface-hover: #EBEEF2;
+  --border: rgba(15,23,42,0.08);
+  --border-strong: rgba(15,23,42,0.16);
+  --text: #14181F;
+  --text-2: #5B6472;
+  --text-3: #98A1B0;
+  --accent: #5A5DE0;
+  --accent-soft: rgba(90,93,224,0.10);
+  --pos: #1FA45B;
+  --neg: #D93E6A;
+  --chart-grid: rgba(15,23,42,0.05);
+  --shadow: 0 8px 28px rgba(15,23,42,0.08);
+  --statusbar-bg: rgba(246,247,249,0.85);
+}
+
+/* ============ BASE ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 15px; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+}
+button { font-family: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+input { font-family: inherit; color: inherit; }
+::selection { background: var(--accent-soft); }
+.mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ============ SYSTEM STATUS BAR (signature) ============ */
+.statusbar {
+  height: 34px;
+  display: flex; align-items: center; gap: 0;
+  padding: 0 16px;
+  font-family: var(--font-data); font-size: 11.5px; font-weight: 500;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--statusbar-bg);
+  backdrop-filter: blur(12px);
+  user-select: none;
+  white-space: nowrap; overflow-x: auto; scrollbar-width: none;
+}
+.statusbar::-webkit-scrollbar { display: none; }
+.sb-brand { color: var(--text); font-weight: 600; letter-spacing: 0.02em; }
+.sb-brand .cursor { display: inline-block; width: 7px; height: 13px; background: var(--accent); margin-left: 5px; vertical-align: -2px; animation: blink 1.2s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.sb-sep { color: var(--text-3); margin: 0 10px; }
+.sb-item { display: inline-flex; align-items: center; gap: 6px; }
+.sb-item b { color: var(--text); font-weight: 600; }
+.sb-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.sb-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.sb-date { color: var(--text-3); }
+
+/* ============ LAYOUT ============ */
+.frame { display: flex; height: calc(100vh - 34px); }
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 14px 10px 12px;
+  background: var(--bg);
+}
+.side-search {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; margin: 0 4px 14px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  color: var(--text-3); font-size: 13px;
+  background: var(--surface);
+  transition: border-color .15s;
+}
+.side-search:hover { border-color: var(--border-strong); }
+.side-search kbd {
+  margin-left: auto; font-family: var(--font-data); font-size: 10px;
+  padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; color: var(--text-3);
+}
+.nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); padding: 12px 12px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 7px 12px; border-radius: var(--r-sm);
+  font-size: 13.5px; font-weight: 500; color: var(--text-2);
+  transition: background .12s, color .12s;
+  text-align: left;
+}
+.nav-item:hover { background: var(--surface-hover); color: var(--text); }
+.nav-item.active { background: var(--surface-2); color: var(--text); }
+.nav-item .sig { width: 7px; height: 7px; border-radius: 2.5px; background: var(--sig, var(--text-3)); flex-shrink: 0; opacity: .55; transition: opacity .12s; }
+.nav-item.active .sig, .nav-item:hover .sig { opacity: 1; }
+.nav-item .badge { margin-left: auto; font-family: var(--font-data); font-size: 10.5px; color: var(--text-3); }
+.side-footer { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--border); }
+.xp-row { display: flex; align-items: center; gap: 10px; padding: 4px; }
+.xp-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--hue-coach)); display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; }
+.xp-meta { flex: 1; min-width: 0; }
+.xp-name { font-size: 12.5px; font-weight: 600; }
+.xp-level { font-family: var(--font-data); font-size: 10.5px; color: var(--text-3); }
+.xp-bar { height: 3px; border-radius: 2px; background: var(--surface-2); margin-top: 4px; overflow: hidden; }
+.xp-bar i { display: block; height: 100%; width: 62%; background: var(--accent); border-radius: 2px; }
+
+.main { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+.view { max-width: 1120px; margin: 0 auto; padding: 32px 36px 80px; display: none; }
+.view.active { display: block; animation: viewIn .25s ease; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ============ COMPONENTS ============ */
+.view-head { margin-bottom: 24px; }
+.view-eyebrow { font-family: var(--font-data); font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--mod-hue, var(--accent)); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.view-title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.view-sub { font-size: 13.5px; color: var(--text-2); margin-top: 6px; max-width: 60ch; }
+
+.grid { display: grid; gap: 14px; }
+.g-4 { grid-template-columns: repeat(4, 1fr); }
+.g-3 { grid-template-columns: repeat(3, 1fr); }
+.g-2 { grid-template-columns: repeat(2, 1fr); }
+.g-23 { grid-template-columns: 2fr 1fr; }
+.g-32 { grid-template-columns: 1fr 2fr; }
+.mt { margin-top: 14px; }
+.mt-lg { margin-top: 28px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 18px;
+}
+.card-title { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.card-title .hint { font-size: 11px; font-weight: 500; color: var(--text-3); }
+
+.metric { padding: 16px 18px; }
+.metric .m-label { font-size: 12px; font-weight: 500; color: var(--text-2); display: flex; align-items: center; gap: 7px; }
+.metric .m-value { font-family: var(--font-data); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; margin-top: 8px; }
+.metric .m-value small { font-size: 13px; color: var(--text-3); font-weight: 500; }
+.metric .m-delta { font-family: var(--font-data); font-size: 11.5px; margin-top: 6px; }
+.up { color: var(--pos); } .down { color: var(--neg); } .flat { color: var(--text-3); }
+
+.chart-box { position: relative; height: 240px; }
+.chart-box.tall { height: 300px; }
+.chart-box.short { height: 170px; }
+
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); padding: 0 10px 10px; border-bottom: 1px solid var(--border); }
+table.data td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+table.data td:first-child, table.data th:first-child { padding-left: 4px; }
+table.data tr:last-child td { border-bottom: none; }
+table.data td.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; color: var(--text); }
+table.data td b { color: var(--text); font-weight: 600; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--text-2); }
+.pill.c { background: color-mix(in srgb, var(--pc, var(--accent)) 14%, transparent); color: var(--pc, var(--accent)); }
+
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 12.5px; }
+.bar-row:last-child { margin-bottom: 0; }
+.bar-row .br-label { width: 110px; flex-shrink: 0; color: var(--text-2); font-weight: 500; }
+.bar-row .br-track { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.bar-row .br-fill { height: 100%; border-radius: 3px; background: var(--bc, var(--accent)); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.bar-row .br-val { font-family: var(--font-data); font-size: 11.5px; color: var(--text-2); width: 86px; text-align: right; flex-shrink: 0; }
+
+.insight {
+  display: flex; gap: 12px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface); margin-bottom: 10px;
+}
+.insight:last-child { margin-bottom: 0; }
+.insight .i-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; background: var(--ic, var(--accent)); }
+.insight .i-title { font-size: 13px; font-weight: 600; }
+.insight .i-body { font-size: 12.5px; color: var(--text-2); margin-top: 3px; line-height: 1.55; }
+.insight .i-meta { font-family: var(--font-data); font-size: 10.5px; color: var(--text-3); margin-top: 7px; }
+
+.ring-wrap { display: flex; align-items: center; gap: 16px; }
+.ring { transform: rotate(-90deg); }
+.ring .track { stroke: var(--surface-2); }
+.ring .prog { stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+
+.dot-matrix { display: grid; grid-template-columns: repeat(14, 1fr); gap: 5px; }
+.dm-cell { aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); }
+.dm-cell.on { background: var(--dc, var(--pos)); }
+.dm-cell.today { outline: 1.5px solid var(--border-strong); outline-offset: 1px; }
+
+.heatmap { display: grid; grid-template-columns: 34px repeat(24, 1fr); gap: 3px; font-family: var(--font-data); font-size: 9.5px; color: var(--text-3); }
+.hm-cell { aspect-ratio: 1.15; border-radius: 3px; background: var(--surface-2); }
+.hm-label { display: flex; align-items: center; }
+
+.quick { display: flex; gap: 8px; flex-wrap: wrap; }
+.quick button {
+  padding: 7px 13px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 12.5px; font-weight: 500; color: var(--text-2); background: var(--surface);
+  transition: all .13s;
+}
+.quick button:hover { border-color: var(--border-strong); color: var(--text); transform: translateY(-1px); }
+
+.svc-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.svc-row:last-child { border-bottom: none; }
+.svc-icon { width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--text-2); flex-shrink: 0; }
+.svc-meta { flex: 1; min-width: 0; }
+.svc-name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+.svc-desc { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+.svc-count { font-family: var(--font-data); font-size: 11px; color: var(--text-3); margin-right: 6px; }
+.svc-btn { padding: 6px 13px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); transition: all .13s; flex-shrink: 0; }
+.svc-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.svc-btn.on { background: color-mix(in srgb, var(--hue-notes) 14%, transparent); color: var(--hue-notes); border-color: transparent; }
+.svc-dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); flex-shrink: 0; }
+
+.cal-day-label { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); margin: 16px 0 8px; }
+.cal-day-label:first-child { margin-top: 0; }
+.cal-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.cal-row:last-child { border-bottom: none; }
+.cal-time { font-family: var(--font-data); font-size: 11.5px; color: var(--text-3); width: 90px; flex-shrink: 0; }
+.cal-title { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; }
+
+/* ============ COMMAND PALETTE ============ */
+.palette-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
+  display: none; align-items: flex-start; justify-content: center; padding-top: 14vh;
+}
+.palette-overlay.open { display: flex; }
+.palette {
+  width: min(560px, calc(100vw - 32px));
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden;
+  animation: palIn .18s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes palIn { from { opacity: 0; transform: scale(.97) translateY(-8px); } to { opacity: 1; transform: none; } }
+.palette input { width: 100%; padding: 16px 18px; font-size: 15px; background: none; border: none; outline: none; border-bottom: 1px solid var(--border); }
+.pal-list { max-height: 320px; overflow-y: auto; padding: 6px; }
+.pal-item { display: flex; align-items: center; gap: 11px; width: 100%; padding: 9px 12px; border-radius: var(--r-sm); font-size: 13.5px; color: var(--text-2); text-align: left; }
+.pal-item:hover, .pal-item.sel { background: var(--surface-hover); color: var(--text); }
+.pal-item .sig { width: 7px; height: 7px; border-radius: 2.5px; background: var(--sig, var(--text-3)); }
+.pal-item .k { margin-left: auto; font-family: var(--font-data); font-size: 10px; color: var(--text-3); }
+.pal-empty { padding: 24px; text-align: center; font-size: 13px; color: var(--text-3); }
+
+/* ============ COACH CHAT ============ */
+.chat-frame { display: flex; flex-direction: column; height: calc(100vh - 34px - 210px); min-height: 420px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
+.chat-scroll { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.msg { max-width: 72%; padding: 11px 15px; border-radius: 14px; font-size: 13.5px; line-height: 1.6; }
+.msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.msg.ai { align-self: flex-start; background: var(--surface-2); border-bottom-left-radius: 4px; color: var(--text); }
+.msg.ai .src { display: block; margin-top: 8px; font-family: var(--font-data); font-size: 10px; color: var(--text-3); }
+.msg.ai b { font-weight: 600; }
+.chat-input-row { display: flex; gap: 10px; padding: 12px; border-top: 1px solid var(--border); }
+.chat-input-row input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); font-size: 13.5px; outline: none; }
+.chat-input-row input:focus { border-color: var(--accent); }
+.chat-send { padding: 10px 18px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 600; font-size: 13px; }
+.chat-send:hover { filter: brightness(1.1); }
+.typing { display: inline-flex; gap: 4px; padding: 14px 16px; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); animation: tp 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes tp { 30% { transform: translateY(-4px); opacity: 1; } }
+
+/* ============ BRIEFING ============ */
+.brief-doc { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); padding: 34px 38px; max-width: 720px; }
+.brief-doc .b-date { font-family: var(--font-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.brief-doc h2 { font-size: 24px; letter-spacing: -0.02em; margin: 10px 0 4px; }
+.brief-doc .b-lede { color: var(--text-2); font-size: 14px; line-height: 1.6; }
+.brief-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 26px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.brief-grid > div { padding: 16px 10px; border-right: 1px solid var(--border); }
+.brief-grid > div:last-child { border-right: none; }
+.brief-grid .bg-l { font-size: 11px; color: var(--text-3); font-weight: 500; }
+.brief-grid .bg-v { font-family: var(--font-data); font-size: 18px; font-weight: 600; margin-top: 5px; }
+.brief-recs { list-style: none; }
+.brief-recs li { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
+.brief-recs li:last-child { border-bottom: none; }
+.brief-recs .n { font-family: var(--font-data); font-size: 11px; color: var(--accent); font-weight: 600; padding-top: 2px; }
+
+/* ============ TOPBAR ACTIONS ============ */
+.theme-btn, .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; color: var(--text-2); }
+.theme-btn:hover, .icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+
+/* ============ RESPONSIVE ============ */
+.menu-btn { display: none; }
+@media (max-width: 1024px) {
+  .g-4 { grid-template-columns: repeat(2, 1fr); }
+  .g-23, .g-32, .g-3 { grid-template-columns: 1fr; }
+  .view { padding: 24px 20px 64px; }
+}
+@media (max-width: 760px) {
+  .sidebar { position: fixed; left: 0; top: 34px; bottom: 0; z-index: 60; transform: translateX(-100%); transition: transform .22s cubic-bezier(.2,.8,.2,1); box-shadow: var(--shadow); }
+  .sidebar.open { transform: none; }
+  .menu-btn { display: inline-flex; }
+  .g-4 { grid-template-columns: 1fr 1fr; }
+  .msg { max-width: 88%; }
+  .brief-grid { grid-template-columns: 1fr 1fr; }
+  .brief-grid > div:nth-child(2n) { border-right: none; }
+  .brief-doc { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+<!-- ============ SYSTEM STATUS BAR ============ -->
+<div class="statusbar" id="statusbar" aria-label="System status">
+  <button class="menu-btn icon-btn" id="menuBtn" aria-label="Toggle navigation">☰</button>
+  <span class="sb-brand">StudentOS<span class="cursor"></span></span>
+  <span class="sb-sep">▸</span>
+  <span id="sbItems"></span>
+  <span class="sb-right">
+    <span class="sb-date mono" id="sbDate"></span>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme">◐</button>
+  </span>
+</div>
+
+<div class="frame">
+  <!-- ============ SIDEBAR ============ -->
+  <nav class="sidebar" id="sidebar" aria-label="Modules">
+    <button class="side-search" id="openPalette">
+      <span>⌘</span> Search or jump to… <kbd>⌘K</kbd>
+    </button>
+    <div id="navList"></div>
+    <div class="side-footer">
+      <div class="xp-row">
+        <div class="xp-avatar">A</div>
+        <div class="xp-meta">
+          <div class="xp-name">Himnish Sorathiya</div>
+          <div class="xp-level">LVL 12 · 2,840 XP · 🔥 21-day streak</div>
+          <div class="xp-bar"><i></i></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main" id="main">
+    <section class="view" id="view-home"></section>
+    <section class="view" id="view-health"></section>
+    <section class="view" id="view-sleep"></section>
+    <section class="view" id="view-nutrition"></section>
+    <section class="view" id="view-workouts"></section>
+    <section class="view" id="view-finance"></section>
+    <section class="view" id="view-study"></section>
+    <section class="view" id="view-notes"></section>
+    <section class="view" id="view-calendar"></section>
+    <section class="view" id="view-habits"></section>
+    <section class="view" id="view-goals"></section>
+    <section class="view" id="view-coach"></section>
+    <section class="view" id="view-briefing"></section>
+    <section class="view" id="view-about"></section>
+  </main>
+</div>
+
+<!-- ============ COMMAND PALETTE ============ -->
+<div class="palette-overlay" id="paletteOverlay">
+  <div class="palette" role="dialog" aria-label="Command palette">
+    <input id="paletteInput" placeholder="Jump to a module or run an action…" autocomplete="off">
+    <div class="pal-list" id="paletteList"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   DATA ENGINE — seeded 90-day dataset for one coherent persona:
+   Himnish Sorathiya, BSc Computer Science & Digitisation student in Berlin. Cutting 82.6 → 78 kg,
+   learning German (B1 exam), hunting an ML internship, €-budget.
+   ================================================================ */
+'use strict';
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rng = mulberry32(20260706);
+const R = (min, max) => min + rng() * (max - min);
+const RI = (min, max) => Math.round(R(min, max));
+
+const TODAY = new Date(2026, 6, 6); // Mon 6 Jul 2026
+const N_DAYS = 90;
+const DAY_MS = 86400000;
+const dateAt = i => new Date(TODAY.getTime() - (N_DAYS - 1 - i) * DAY_MS);
+const fmtD = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const fmtDW = d => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const isWknd = d => d.getDay() === 0 || d.getDay() === 6;
+const eur = c => '€' + (c / 100).toFixed(2).replace(/\.00$/, '');
+const hm = min => `${Math.floor(min / 60)}h ${String(Math.round(min % 60)).padStart(2, '0')}m`;
+const avg = a => a.reduce((s, x) => s + x, 0) / (a.length || 1);
+const last = (a, n) => a.slice(-n);
+const movAvg = (a, w) => a.map((_, i) => avg(a.slice(Math.max(0, i - w + 1), i + 1)));
+
+/* ---------- daily health + sleep + nutrition ---------- */
+const days = [];
+for (let i = 0; i < N_DAYS; i++) {
+  const d = dateAt(i);
+  const t = i / (N_DAYS - 1);
+  const wknd = isWknd(d);
+
+  // weight: 82.6 → 79.4 kg, gentle noise + weekend blips
+  const weight = 82.6 - 3.2 * t + R(-0.25, 0.25) + (wknd ? 0.12 : 0);
+  const bodyFat = 19.8 - 1.9 * t + R(-0.2, 0.2);
+
+  // sleep: ~23:40 bed weekdays, +80min weekends; duration 6.1–8.3h
+  const bedMin = 23 * 60 + 40 + (wknd ? RI(50, 110) : RI(-25, 30));
+  const durMin = RI(370, 500) + (wknd ? RI(10, 40) : 0);
+  const onset = RI(8, wknd ? 34 : 22);
+  const shortStreakPenalty = durMin < 380 ? RI(6, 12) : 0;
+  const recovery = Math.max(38, Math.min(96, Math.round(
+    30 + (durMin - 360) * 0.28 - (wknd ? 6 : 0) - shortStreakPenalty + R(-6, 6))));
+  const hrv = Math.round(52 + (recovery - 60) * 0.55 + R(-5, 5));
+  const rhr = Math.round(58 - (recovery - 60) * 0.09 + R(-1.5, 1.5));
+
+  // nutrition: cut at ~2,300 kcal, protein target 150g
+  const kcal = RI(2050, 2560) + (wknd ? RI(80, 260) : 0);
+  const protein = RI(112, 162) - (wknd ? RI(5, 22) : 0);
+  const fat = Math.round(kcal * R(0.24, 0.30) / 9);
+  const carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
+
+  days.push({
+    d, i, wknd,
+    weight: +weight.toFixed(1), bodyFat: +bodyFat.toFixed(1),
+    steps: RI(6200, 13800) - (wknd ? RI(0, 2500) : 0),
+    waterMl: RI(1700, 3100),
+    bedMin, durMin, onset, recovery, hrv, rhr,
+    wakeMin: (bedMin + durMin + onset) % 1440,
+    kcal, protein, fat, carbs,
+  });
+}
+// pin “today/yesterday” to briefing narrative
+const yd = days[N_DAYS - 2], td = days[N_DAYS - 1];
+yd.kcal = 2280; yd.protein = 143; yd.recovery = 74;
+td.durMin = 444; td.recovery = 81; td.weight = 79.4; td.hrv = 68; td.rhr = 54;
+td.protein = 118; td.kcal = 1640; td.waterMl = 1450; td.steps = 6900; // day in progress
+
+/* ---------- workouts: PPL split, progressing volume ---------- */
+const LIFTS = {
+  'Bench press':    { day: 'push', start: 72.5, gain: 7.5, hue: 'workout' },
+  'Overhead press': { day: 'push', start: 45,   gain: 5 },
+  'Squat':          { day: 'legs', start: 100,  gain: 12.5 },
+  'Romanian DL':    { day: 'legs', start: 90,   gain: 10 },
+  'Weighted pull-up': { day: 'pull', start: 10, gain: 7.5 },
+  'Barbell row':    { day: 'pull', start: 70,   gain: 7.5 },
+};
+const workouts = [];
+const SPLIT = ['push', 'pull', 'legs', null, 'push', 'pull', null]; // Mon..Sun
+for (let i = 0; i < N_DAYS; i++) {
+  const d = dateAt(i);
+  const kind = SPLIT[(d.getDay() + 6) % 7];
+  if (!kind || rng() < 0.14) { // ~14% skipped sessions
+    if (kind && rng() < 0.3) workouts.push({ i, d, kind: 'run', km: +R(4.5, 9.2).toFixed(1), min: RI(26, 55) });
+    continue;
+  }
+  const t = i / N_DAYS;
+  let vol = 0;
+  const sets = [];
+  for (const [name, L] of Object.entries(LIFTS)) {
+    if (L.day !== kind) continue;
+    const w = L.start + L.gain * t + R(-2.5, 2.5);
+    const nSets = RI(3, 4), reps = RI(6, 9);
+    sets.push({ name, weight: Math.round(w / 2.5) * 2.5, sets: nSets, reps });
+    vol += w * nSets * reps;
+  }
+  workouts.push({ i, d, kind, sets, vol: Math.round(vol), min: RI(52, 78) });
+}
+const PRS = [
+  { lift: 'Bench press', val: '82.5 kg × 5', when: '3 days ago', fresh: true },
+  { lift: 'Squat', val: '117.5 kg × 4', when: '1 week ago', fresh: true },
+  { lift: 'Weighted pull-up', val: '+17.5 kg × 6', when: '2 weeks ago', fresh: false },
+  { lift: '5k run', val: '26:41', when: '3 weeks ago', fresh: false },
+];
+
+/* ---------- finance: July month-to-date + June history ---------- */
+const CATS = {
+  Rent: { hue: '#7C8CF8', budget: 62000 }, Groceries: { hue: '#4FC97B', budget: 28000 },
+  'Eating out': { hue: '#F0648C', budget: 12000 }, Transport: { hue: '#38BDF8', budget: 6000 },
+  Subscriptions: { hue: '#A78BFA', budget: 6500 }, Entertainment: { hue: '#E8B93B', budget: 9000 },
+  Fitness: { hue: '#2DD4BF', budget: 3500 }, Other: { hue: '#98A1B0', budget: 8000 },
+};
+const INCOME = [ { src: 'Working-student job (HiWi)', amt: 118000 }, { src: 'Family support', amt: 40000 } ];
+const tx = [
+  { d: 'Jul 1', cat: 'Rent', who: 'Studentenwerk München', amt: 62000 },
+  { d: 'Jul 1', cat: 'Transport', who: 'Deutschlandticket', amt: 5800 },
+  { d: 'Jul 1', cat: 'Subscriptions', who: 'Spotify Student', amt: 599 },
+  { d: 'Jul 2', cat: 'Groceries', who: 'Lidl', amt: 3417 },
+  { d: 'Jul 2', cat: 'Subscriptions', who: 'iCloud+ 200GB', amt: 299 },
+  { d: 'Jul 3', cat: 'Fitness', who: 'FitStar Gym', amt: 2990 },
+  { d: 'Jul 3', cat: 'Eating out', who: 'Mensa Arcisstraße', amt: 480 },
+  { d: 'Jul 4', cat: 'Groceries', who: 'REWE', amt: 4183 },
+  { d: 'Jul 4', cat: 'Entertainment', who: 'Kino am Olympiapark', amt: 1450 },
+  { d: 'Jul 5', cat: 'Eating out', who: 'Türkitch Döner', amt: 850 },
+  { d: 'Jul 5', cat: 'Subscriptions', who: 'Netflix (shared)', amt: 649 },
+  { d: 'Jul 6', cat: 'Groceries', who: 'Aldi Süd', amt: 2891 },
+  { d: 'Jul 6', cat: 'Other', who: 'Copy shop — thesis print', amt: 780 },
+];
+const juneByCat = { Rent: 62000, Groceries: 27210, 'Eating out': 14890, Transport: 5800, Subscriptions: 6420, Entertainment: 11200, Fitness: 2990, Other: 5310 };
+const cashflow6m = [
+  { m: 'Feb', inc: 1580, exp: 1352 }, { m: 'Mar', inc: 1580, exp: 1401 },
+  { m: 'Apr', inc: 1580, exp: 1296 }, { m: 'May', inc: 1580, exp: 1438 },
+  { m: 'Jun', inc: 1580, exp: 1358 }, { m: 'Jul (proj.)', inc: 1580, exp: 1370 },
+];
+
+/* ---------- study ---------- */
+const COURSES = [
+  { name: 'Machine Learning', code: 'IN2064', ects: 8, hue: '#A78BFA' },
+  { name: 'Distributed Systems', code: 'IN2259', ects: 6, hue: '#38BDF8' },
+  { name: 'Statistics for ML', code: 'MA3403', ects: 5, hue: '#2DD4BF' },
+  { name: 'German B1', code: 'SPR-B1', ects: 3, hue: '#E8B93B' },
+];
+const DEADLINES = [
+  { title: 'DS project milestone 3', course: 'Distributed Systems', due: 'Thu 9 Jul', days: 3, weight: '25% of grade', status: 'in progress', pct: 60 },
+  { title: 'ML assignment 6 — CNNs', course: 'Machine Learning', due: 'Fri 10 Jul', days: 4, weight: '10% of grade', status: 'in progress', pct: 35 },
+  { title: 'Stats problem set 9', course: 'Statistics for ML', due: 'Sun 12 Jul', days: 6, weight: 'pass/fail', status: 'not started', pct: 0 },
+  { title: 'German B1 mock exam', course: 'German B1', due: 'Wed 15 Jul', days: 9, weight: 'practice', status: 'not started', pct: 0 },
+  { title: 'ML final exam', course: 'Machine Learning', due: 'Tue 28 Jul', days: 22, weight: '60% of grade', status: 'revising', pct: 20 },
+];
+const studyByDay = days.map(dd => {
+  if (dd.wknd) return rng() < 0.4 ? 0 : +R(0.5, 2.2).toFixed(1);
+  return +R(1.2, 4.4).toFixed(1);
+});
+const pomosToday = 4, studyTargetH = 2.5;
+
+/* ---------- habits ---------- */
+const HABITS = [
+  { name: 'Coding (1h+)', hue: 'var(--hue-study)', wkndDrop: 0.15, base: 0.84 },
+  { name: 'German practice', hue: 'var(--hue-habits)', wkndDrop: 0.45, base: 0.78 },
+  { name: 'Reading (20 min)', hue: 'var(--hue-goals)', wkndDrop: 0.05, base: 0.66 },
+  { name: 'Meditation', hue: 'var(--hue-coach)', wkndDrop: 0.10, base: 0.58 },
+  { name: 'Gym / movement', hue: 'var(--hue-workout)', wkndDrop: 0.20, base: 0.81 },
+  { name: 'In bed by 00:00', hue: 'var(--hue-sleep)', wkndDrop: 0.50, base: 0.72 },
+];
+HABITS.forEach(h => {
+  h.log = days.map(dd => rng() < (h.base - (dd.wknd ? h.wkndDrop : 0)));
+  h.adherence = Math.round(100 * h.log.filter(Boolean).length / N_DAYS);
+  let s = 0; for (let i = N_DAYS - 1; i >= 0 && h.log[i]; i--) s++;
+  h.streak = s;
+});
+
+/* ---------- goals ---------- */
+const GOALS = [
+  { title: 'Cut to 78.0 kg', domain: 'Fitness', hue: 'var(--hue-health)', cur: '79.4 kg', pct: 70, eta: '≈ 4 weeks at −0.35 kg/wk', milestones: ['82 kg ✓', '80 kg ✓', '79 kg', '78 kg'] },
+  { title: 'Pass German B1 exam', domain: 'Learning', hue: 'var(--hue-habits)', cur: 'Mock score 71%', pct: 64, eta: 'Exam: 14 Aug 2026', milestones: ['A2 review ✓', 'Vocab 2k ✓', 'Mock ≥ 75%', 'Exam'] },
+  { title: 'Land ML internship', domain: 'Career', hue: 'var(--hue-study)', cur: '11 applications · 2 interviews', pct: 43, eta: '≈ 9 weeks at current pace', milestones: ['CV + portfolio ✓', '10 applications ✓', 'Final rounds', 'Offer'] },
+  { title: 'Save €1,500 buffer', domain: 'Finance', hue: 'var(--hue-finance)', cur: '€940 saved', pct: 63, eta: '≈ Oct 2026 at €210/mo', milestones: ['€250 ✓', '€500 ✓', '€1,000', '€1,500'] },
+  { title: 'Run 10k under 55:00', domain: 'Fitness', hue: 'var(--hue-goals)', cur: 'Best: 58:12', pct: 48, eta: 'Race: 20 Sep 2026', milestones: ['5k ✓', '8k ✓', '10k complete', 'Sub-55'] },
+];
+
+/* ---------- note-taking service connections (mock — no real OAuth/API calls) ---------- */
+const NOTE_SERVICES = [
+  { id: 'notion', name: 'Notion', desc: 'Pages & databases', connected: true, count: 42 },
+  { id: 'gdocs', name: 'Google Docs', desc: 'Docs & files', connected: true, count: 17 },
+  { id: 'evernote', name: 'Evernote', desc: 'Notebooks', connected: false, count: 0 },
+  { id: 'onenote', name: 'OneNote', desc: 'Sections & pages', connected: false, count: 0 },
+  { id: 'obsidian', name: 'Obsidian', desc: 'Local markdown vault', connected: false, count: 0 },
+];
+const NOTES = [
+  { title: 'Algorithms — sorting cheat sheet', source: 'notion', tag: 'Study', edited: '2h ago' },
+  { title: 'PESTEL analysis — Ryanair draft', source: 'gdocs', tag: 'Study', edited: 'Yesterday' },
+  { title: 'StudentOS — feature backlog', source: 'notion', tag: 'Project', edited: 'Yesterday' },
+  { title: 'Werkstudent applications tracker', source: 'notion', tag: 'Career', edited: '2 days ago' },
+  { title: 'Interview prep — Scrum questions', source: 'gdocs', tag: 'Career', edited: '3 days ago' },
+  { title: 'Meal prep ideas', source: 'notion', tag: 'Personal', edited: '5 days ago' },
+  { title: 'Berlin flat-hunting notes', source: 'gdocs', tag: 'Personal', edited: '1 week ago' },
+];
+
+/* ---------- calendar service connections (mock — no real OAuth/API calls) ---------- */
+const CAL_SERVICES = [
+  { id: 'google', name: 'Google Calendar', desc: 'Personal & class schedule', connected: true, count: 11 },
+  { id: 'microsoft', name: 'Microsoft Calendar', desc: 'University Outlook / Teams', connected: true, count: 6 },
+  { id: 'apple', name: 'Apple Calendar', desc: 'iCloud calendar', connected: false, count: 0 },
+];
+const CAL_EVENTS = [
+  { title: 'Algorithms & Problem Solving — lecture', day: 'Today', time: '09:00–10:30', source: 'microsoft', tag: 'Class' },
+  { title: 'Gym — push day', day: 'Today', time: '18:00–19:00', source: 'google', tag: 'Personal' },
+  { title: 'StudentOS — feature review', day: 'Today', time: '20:00–20:45', source: 'google', tag: 'Project' },
+  { title: 'Software Development — assignment due', day: 'Tomorrow', time: '23:59', source: 'microsoft', tag: 'Deadline' },
+  { title: 'German course — A1 review', day: 'Tomorrow', time: '17:00–18:30', source: 'google', tag: 'Learning' },
+  { title: 'University — group project sync', day: 'Thu', time: '14:00–15:00', source: 'microsoft', tag: 'Class' },
+  { title: 'Flat inspection — Neukölln', day: 'Fri', time: '11:00–11:30', source: 'google', tag: 'Personal' },
+];
+
+
+const INSIGHTS = [
+  { mod: 'sleep', sev: 'warn', title: 'Weekend sleep shift is your biggest recovery leak', body: 'Your sleep midpoint drifts 1.9h later on Fri–Sat. Mondays after a shifted weekend average recovery 61% vs 78% baseline.', meta: 'sleep_logs · 90d · circadian-shift rule' },
+  { mod: 'nutrition', sev: 'info', title: 'Protein: 32g short of target today', body: 'You are at 118g of a 150g target with dinner remaining. A skyr bowl (+28g) or soy-chunk curry (+34g) closes the gap.', meta: 'meals · today · target-gap rule' },
+  { mod: 'health', sev: 'good', title: 'On pace for 78 kg in ~4 weeks', body: '7-day moving average is falling 0.35 kg/week with protein held above 130g — lean mass is likely being preserved.', meta: 'health_metrics · 28d trend' },
+  { mod: 'finance', sev: 'warn', title: 'Eating out is trending 24% over June', body: 'Month-to-date pace projects €148 vs €119 in June. Cooking twice more per week keeps you inside the €120 envelope.', meta: 'transactions · MTD pace model' },
+  { mod: 'study', sev: 'warn', title: '3 deadlines land within 7 days', body: 'DS milestone (Thu) is 60% done and highest-weight. Recommended split today: 1.5h DS, 1h ML assignment.', meta: 'assignments · priority ranking' },
+  { mod: 'habits', sev: 'info', title: 'German practice drops 45% on weekends', body: 'Weekday adherence 84%, weekend 39%. Pairing it with your Saturday coffee (habit stacking) is the cheapest fix.', meta: 'habit_logs · weekday split' },
+  { mod: 'workout', sev: 'good', title: 'Bench press volume up 18% this month', body: 'Push-day volume rose without RHR or recovery degradation — current progression is sustainable.', meta: 'workout_sets · 30d volume' },
+];
+
+/* ================================================================
+   APP FRAMEWORK — router, theme, status bar, palette, charts
+   ================================================================ */
+const MODULES = [
+  { id: 'home', label: 'Home', hue: '--accent' },
+  { id: 'briefing', label: 'Daily Briefing', hue: '--accent' },
+  { id: 'coach', label: 'AI Coach', hue: '--hue-coach' },
+  { id: 'health', label: 'Health', hue: '--hue-health', group: 'Modules' },
+  { id: 'sleep', label: 'Sleep', hue: '--hue-sleep' },
+  { id: 'nutrition', label: 'Nutrition', hue: '--hue-nutrition' },
+  { id: 'workouts', label: 'Workouts', hue: '--hue-workout' },
+  { id: 'finance', label: 'Finance', hue: '--hue-finance' },
+  { id: 'study', label: 'Study', hue: '--hue-study', badge: '3' },
+  { id: 'notes', label: 'Notes', hue: '--hue-notes' },
+  { id: 'habits', label: 'Habits', hue: '--hue-habits' },
+  { id: 'goals', label: 'Goals', hue: '--hue-goals' },
+  { id: 'calendar', label: 'Calendar', hue: '--hue-calendar' },
+  { id: 'about', label: 'About This Project', hue: '--accent', group: 'Info' },
+];
+const $ = s => document.querySelector(s);
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let currentView = 'home';
+const charts = {};
+
+function mkChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (typeof Chart === 'undefined') {
+    el.parentElement.innerHTML = '<div style="display:grid;place-items:center;height:100%;color:var(--text-3);font-size:12px">Chart preview requires an internet connection (Chart.js CDN).</div>';
+    return;
+  }
+  if (charts[id]) charts[id].destroy();
+  Chart.defaults.font.family = cssVar('--font-data');
+  Chart.defaults.font.size = 10;
+  Chart.defaults.color = cssVar('--text-3');
+  cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false, animation: { duration: 500 } }, cfg.options || {});
+  charts[id] = new Chart(el, cfg);
+}
+const gridScale = (extra = {}) => Object.assign({ grid: { color: cssVar('--chart-grid') }, border: { display: false } }, extra);
+const noGrid = (extra = {}) => Object.assign({ grid: { display: false }, border: { display: false } }, extra);
+const tipStyle = { backgroundColor: cssVar('--surface-2'), titleColor: cssVar('--text'), bodyColor: cssVar('--text-2'), borderColor: cssVar('--border-strong'), borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: false };
+
+/* ---------- derived, shared across views ---------- */
+const totalBudget = Object.values(CATS).reduce((s, c) => s + c.budget, 0);
+const spentMTD = tx.reduce((s, t) => s + t.amt, 0);
+const budgetLeft = totalBudget - spentMTD;
+const deadlines7 = DEADLINES.filter(x => x.days <= 7).length;
+const sleepDebt14 = last(days, 14).reduce((s, d) => s + Math.max(0, 450 - d.durMin), 0); // vs 7.5h target
+const consistency = Math.max(0, Math.round(100 - (Math.sqrt(avg(last(days, 30).map(d => Math.pow(d.bedMin - avg(last(days, 30).map(x => x.bedMin)), 2)))) / 60) * 22));
+const protT = 150, kcalT = 2300;
+
+/* ---------- shell ---------- */
+function renderStatusbar() {
+  $('#sbItems').innerHTML = [
+    ['--hue-sleep', 'REC', td.recovery + '%'],
+    ['--hue-sleep', 'SLEEP', hm(td.durMin)],
+    ['--hue-nutrition', 'PROT', td.protein + 'g'],
+    ['--hue-finance', 'LEFT', '€' + Math.round(budgetLeft / 100)],
+    ['--hue-study', 'DUE≤7D', deadlines7],
+    ['--hue-habits', 'STREAK', '21d'],
+  ].map(([h, k, v]) => `<span class="sb-item"><span class="sb-dot" style="background:var(${h})"></span>${k} <b>${v}</b></span>`).join('<span class="sb-sep">·</span>');
+  $('#sbDate').textContent = TODAY.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+}
+function renderNav() {
+  let html = '';
+  MODULES.forEach(m => {
+    if (m.group) html += `<div class="nav-label">${m.group}</div>`;
+    html += `<button class="nav-item ${m.id === currentView ? 'active' : ''}" data-view="${m.id}" style="--sig:var(${m.hue})">
+      <span class="sig"></span>${m.label}${m.badge ? `<span class="badge">${m.badge}</span>` : ''}</button>`;
+  });
+  $('#navList').innerHTML = html;
+  document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => { showView(b.dataset.view); $('#sidebar').classList.remove('open'); });
+}
+function showView(id) {
+  currentView = id;
+  Object.values(charts).forEach(c => c.destroy());
+  for (const k in charts) delete charts[k];
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = $('#view-' + id);
+  el.classList.add('active'); // must be visible BEFORE charts init, or Chart.js sizes to 0
+  RENDER[id]();
+  $('#main').scrollTop = 0;
+  renderNav();
+}
+function viewHead(mod, eyebrow, title, sub) {
+  return `<div class="view-head" style="--mod-hue:var(${mod})">
+    <div class="view-eyebrow">${eyebrow}</div>
+    <h1 class="view-title">${title}</h1>
+    ${sub ? `<p class="view-sub">${sub}</p>` : ''}</div>`;
+}
+function metricCard(label, hue, value, unit, delta, dir) {
+  return `<div class="card metric">
+    <div class="m-label"><span class="sb-dot" style="background:var(${hue})"></span>${label}</div>
+    <div class="m-value mono">${value}${unit ? ` <small>${unit}</small>` : ''}</div>
+    ${delta ? `<div class="m-delta ${dir}">${delta}</div>` : ''}</div>`;
+}
+function insightCard(ins) {
+  const hues = { sleep: '--hue-sleep', nutrition: '--hue-nutrition', health: '--hue-health', finance: '--hue-finance', study: '--hue-study', habits: '--hue-habits', workout: '--hue-workout' };
+  return `<div class="insight" style="--ic:var(${hues[ins.mod]})">
+    <span class="i-dot"></span>
+    <div><div class="i-title">${ins.title}</div>
+    <div class="i-body">${ins.body}</div>
+    <div class="i-meta">AI INSIGHT · ${ins.meta}</div></div></div>`;
+}
+function ring(pct, hue, size = 72, sw = 7, label = '') {
+  const r = (size - sw) / 2, c = 2 * Math.PI * r;
+  return `<div style="position:relative;width:${size}px;height:${size}px;flex-shrink:0">
+    <svg class="ring" width="${size}" height="${size}">
+      <circle class="track" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke-width="${sw}"/>
+      <circle class="prog" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(${hue})" stroke-width="${sw}" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pct / 100)}"/>
+    </svg>
+    <div style="position:absolute;inset:0;display:grid;place-items:center" class="mono">
+      <span style="font-size:${size > 80 ? 17 : 13}px;font-weight:600">${label || pct + '%'}</span></div></div>`;
+}
+
+/* ================================================================
+   VIEWS
+   ================================================================ */
+const RENDER = {};
+
+/* ---------- HOME ---------- */
+RENDER.home = () => {
+  const hour = 9; // prototype fixed at morning
+  $('#view-home').innerHTML = `
+    ${viewHead('--accent', 'SYSTEM · ALL MODULES NOMINAL', 'Good morning, Himnish',
+      `Recovery is <b>81%</b> — a solid base. One flag: the DS milestone lands Thursday and it’s your highest-weight deadline this week.`)}
+    <div class="grid g-4">
+      ${metricCard('Recovery', '--hue-sleep', td.recovery, '%', '↑ 7 vs yesterday', 'up')}
+      ${metricCard('Sleep', '--hue-sleep', hm(td.durMin), '', '↑ 26m vs 7-day avg', 'up')}
+      ${metricCard('Budget left', '--hue-finance', '€' + Math.round(budgetLeft / 100), '', '25 days remaining', 'flat')}
+      ${metricCard('Deadlines ≤ 7d', '--hue-study', deadlines7, '', 'closest: Thu 9 Jul', 'down')}
+    </div>
+    <div class="grid g-23 mt">
+      <div>
+        <div class="card">
+          <div class="card-title">Today’s plan <span class="hint">generated 06:00 · from briefing engine</span></div>
+          <ul class="brief-recs">
+            <li><span class="n">01</span><span><b>Study 2.5h</b> — 1.5h DS milestone (60% → 85%), 1h ML assignment 6.</span></li>
+            <li><span class="n">02</span><span><b>Push day</b> at 17:30 — recovery supports full intensity. Bench target: 82.5 kg × 5.</span></li>
+            <li><span class="n">03</span><span><b>Protein +32g needed</b> — you’re at 118g of 150g. Skyr bowl after training closes it.</span></li>
+            <li><span class="n">04</span><span><b>In bed by 23:30</b> — protects tomorrow’s recovery for Thursday’s deadline push.</span></li>
+          </ul>
+        </div>
+        <div class="card mt">
+          <div class="card-title">14-day pulse <span class="hint">recovery vs study hours</span></div>
+          <div class="chart-box short"><canvas id="ch-home"></canvas></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Signals <span class="hint">top insights</span></div>
+          ${INSIGHTS.slice(0, 3).map(i => `<div style="margin-bottom:10px">${insightCard(i)}</div>`).join('')}
+        </div>
+        <div class="card mt">
+          <div class="card-title">Quick actions</div>
+          <div class="quick">
+            <button onclick="showView('nutrition')">＋ Log meal</button>
+            <button onclick="showView('workouts')">＋ Log workout</button>
+            <button onclick="showView('finance')">＋ Add expense</button>
+            <button onclick="showView('coach')">Ask coach</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  const d14 = last(days, 14);
+  mkChart('ch-home', { type: 'bar',
+    data: { labels: d14.map(x => fmtD(x.d)), datasets: [
+      { label: 'Recovery %', data: d14.map(x => x.recovery), type: 'line', borderColor: cssVar('--hue-sleep'), backgroundColor: cssVar('--hue-sleep'), tension: .4, pointRadius: 0, borderWidth: 2, yAxisID: 'y' },
+      { label: 'Study h', data: last(studyByDay, 14), backgroundColor: cssVar('--hue-study') + '99', borderRadius: 4, yAxisID: 'y1' }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle },
+      scales: { x: noGrid(), y: gridScale({ min: 30, max: 100 }), y1: { display: false, max: 8 } } } });
+};
+
+/* ---------- HEALTH ---------- */
+RENDER.health = () => {
+  const w7 = avg(last(days, 7).map(d => d.weight)), w14 = avg(days.slice(-14, -7).map(d => d.weight));
+  const bmi = (td.weight / (1.80 ** 2)).toFixed(1);
+  $('#view-health').innerHTML = `
+    ${viewHead('--hue-health', 'MODULE 01 · HEALTH', 'Health',
+      'Weight, body composition and movement. Trend beats snapshot: the 7-day average is the number that matters.')}
+    <div class="grid g-4">
+      ${metricCard('Weight (7d avg)', '--hue-health', w7.toFixed(1), 'kg', `↓ ${(w14 - w7).toFixed(1)} kg vs prior week`, 'up')}
+      ${metricCard('Body fat', '--hue-health', td.bodyFat, '%', '↓ 1.9 pts in 90 days', 'up')}
+      ${metricCard('BMI', '--hue-health', bmi, '', 'healthy range', 'flat')}
+      ${metricCard('Steps today', '--hue-health', td.steps.toLocaleString(), '', 'goal 10,000', 'flat')}
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Weight — 90 days <span class="hint">daily · 7-day moving average</span></div>
+        <div class="chart-box tall"><canvas id="ch-weight"></canvas></div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Goal: 78.0 kg</div>
+          <div class="ring-wrap">${ring(70, '--hue-health', 84)}
+            <div><div class="mono" style="font-size:15px;font-weight:600">79.4 → 78.0 kg</div>
+            <div style="font-size:12px;color:var(--text-2);margin-top:4px;line-height:1.5">Losing 0.35 kg/week.<br>ETA: <b>≈ 4 weeks</b>.</div></div></div>
+        </div>
+        <div class="card mt">
+          <div class="card-title">Hydration today</div>
+          <div class="bar-row"><span class="br-label">Water</span><span class="br-track"><span class="br-fill" style="width:${Math.min(100, td.waterMl / 30)}%;--bc:var(--hue-goals)"></span></span><span class="br-val">${(td.waterMl/1000).toFixed(1)} / 3.0 L</span></div>
+          <div class="bar-row"><span class="br-label">Movement</span><span class="br-track"><span class="br-fill" style="width:${Math.min(100, td.steps / 100)}%;--bc:var(--hue-health)"></span></span><span class="br-val">${td.steps.toLocaleString()} / 10k</span></div>
+        </div>
+        <div class="mt">${insightCard(INSIGHTS[2])}</div>
+      </div>
+    </div>
+    <div class="card mt">
+      <div class="card-title">Steps — last 14 days</div>
+      <div class="chart-box short"><canvas id="ch-steps"></canvas></div>
+    </div>`;
+  mkChart('ch-weight', { type: 'line',
+    data: { labels: days.map(x => fmtD(x.d)), datasets: [
+      { data: days.map(x => x.weight), borderColor: cssVar('--hue-health') + '45', pointRadius: 0, borderWidth: 1.5, tension: .3 },
+      { data: movAvg(days.map(x => x.weight), 7), borderColor: cssVar('--hue-health'), pointRadius: 0, borderWidth: 2.5, tension: .35 },
+      { data: days.map(() => 78), borderColor: cssVar('--text-3'), borderDash: [4, 5], pointRadius: 0, borderWidth: 1 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle },
+      scales: { x: noGrid({ ticks: { maxTicksLimit: 7 } }), y: gridScale({ min: 77, max: 84 }) } } });
+  const d14 = last(days, 14);
+  mkChart('ch-steps', { type: 'bar',
+    data: { labels: d14.map(x => fmtD(x.d)), datasets: [{ data: d14.map(x => x.steps), backgroundColor: d14.map(x => x.steps >= 10000 ? cssVar('--hue-health') : cssVar('--hue-health') + '55'), borderRadius: 5 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle }, scales: { x: noGrid(), y: gridScale() } } });
+};
+
+/* ---------- SLEEP ---------- */
+RENDER.sleep = () => {
+  const d30 = last(days, 30);
+  $('#view-sleep').innerHTML = `
+    ${viewHead('--hue-sleep', 'MODULE 02 · SLEEP', 'Sleep',
+      'Duration is only half the story — consistency of your sleep midpoint drives how recovered you feel.')}
+    <div class="grid g-4">
+      ${metricCard('Last night', '--hue-sleep', hm(td.durMin), '', `onset ${td.onset} min`, 'up')}
+      ${metricCard('Recovery', '--hue-sleep', td.recovery, '%', `HRV ${td.hrv} ms · RHR ${td.rhr}`, 'up')}
+      ${metricCard('Sleep debt (14d)', '--hue-sleep', hm(sleepDebt14), '', 'vs 7h30m target', sleepDebt14 > 300 ? 'down' : 'flat')}
+      ${metricCard('Consistency', '--hue-sleep', consistency, '/100', 'bedtime σ-based score', 'flat')}
+    </div>
+    <div class="card mt">
+      <div class="card-title">Duration & recovery — 30 days <span class="hint">bars: sleep · line: recovery</span></div>
+      <div class="chart-box"><canvas id="ch-sleep"></canvas></div>
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Circadian heatmap <span class="hint">90 days · probability asleep by hour</span></div>
+        <div class="heatmap" id="hm-sleep"></div>
+        <div style="font-family:var(--font-data);font-size:10px;color:var(--text-3);margin-top:10px">00 — 23 h · darker = more often asleep. Weekend rows shift visibly right.</div>
+      </div>
+      <div>${insightCard(INSIGHTS[0])}
+        <div class="insight" style="--ic:var(--hue-sleep)"><span class="i-dot"></span>
+          <div><div class="i-title">Recovery dips after short-sleep streaks</div>
+          <div class="i-body">After 3+ consecutive nights under 6h30m, next-day recovery averages 14 points lower. You’ve had two such streaks in 90 days.</div>
+          <div class="i-meta">AI INSIGHT · sleep_logs · streak rule</div></div></div>
+      </div>
+    </div>`;
+  mkChart('ch-sleep', { type: 'bar',
+    data: { labels: d30.map(x => fmtD(x.d)), datasets: [
+      { data: d30.map(x => +(x.durMin / 60).toFixed(2)), backgroundColor: d30.map(x => x.wknd ? cssVar('--hue-sleep') + '66' : cssVar('--hue-sleep') + 'B3'), borderRadius: 4, yAxisID: 'y' },
+      { type: 'line', data: d30.map(x => x.recovery), borderColor: cssVar('--hue-coach'), pointRadius: 0, borderWidth: 2, tension: .4, yAxisID: 'y1' }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle },
+      scales: { x: noGrid({ ticks: { maxTicksLimit: 8 } }), y: gridScale({ min: 4, max: 10 }), y1: { position: 'right', min: 30, max: 100, grid: { display: false }, border: { display: false } } } } });
+  // heatmap: weekday × hour asleep probability
+  const WD = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const grid = Array.from({ length: 7 }, () => new Array(24).fill(0)), counts = new Array(7).fill(0);
+  days.forEach(dd => {
+    const w = (dd.d.getDay() + 6) % 7; counts[w]++;
+    for (let h = 0; h < 24; h++) {
+      const hs = h * 60, sleepStart = dd.bedMin + dd.onset, sleepEnd = sleepStart + dd.durMin; // may exceed 1440
+      const inSleep = (hs + 1440 >= sleepStart && hs + 1440 < sleepEnd) || (hs >= sleepStart && hs < sleepEnd);
+      if (inSleep) grid[w][h]++;
+    }
+  });
+  $('#hm-sleep').innerHTML = grid.map((row, w) =>
+    `<span class="hm-label">${WD[w]}</span>` + row.map(v => {
+      const p = counts[w] ? v / counts[w] : 0;
+      return `<span class="hm-cell" style="${p > 0.05 ? `background:color-mix(in srgb, var(--hue-sleep) ${Math.round(p * 85)}%, var(--surface-2))` : ''}"></span>`;
+    }).join('')).join('');
+};
+
+/* ---------- NUTRITION ---------- */
+RENDER.nutrition = () => {
+  const d30 = last(days, 30);
+  const meals = [
+    ['08:10', 'Breakfast', 'Oats, whey, banana, peanut butter', 620, 42],
+    ['12:40', 'Lunch', 'Mensa: lentil dal, rice, salad', 680, 28],
+    ['15:30', 'Snack', 'Skyr 300g + berries', 340, 48],
+  ];
+  const SUGG = [['Soy chunk curry + rice', 34], ['Skyr bowl + granola', 28], ['Paneer wrap', 26], ['Burrito bowl', 31]];
+  $('#view-nutrition').innerHTML = `
+    ${viewHead('--hue-nutrition', 'MODULE 03 · NUTRITION', 'Nutrition',
+      'Cutting at ~2,300 kcal with protein prioritized at 150g to protect lean mass.')}
+    <div class="grid g-32">
+      <div class="card">
+        <div class="card-title">Today <span class="hint">vs targets</span></div>
+        <div class="ring-wrap" style="margin-bottom:18px">${ring(Math.round(100 * td.kcal / kcalT), '--hue-nutrition', 92, 8, td.kcal)}
+          <div><div style="font-size:13px;font-weight:600">${td.kcal} / ${kcalT} kcal</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:3px">${kcalT - td.kcal} kcal remaining — on plan for dinner + post-gym snack.</div></div></div>
+        <div class="bar-row"><span class="br-label">Protein</span><span class="br-track"><span class="br-fill" style="width:${Math.round(100 * td.protein / protT)}%;--bc:var(--hue-nutrition)"></span></span><span class="br-val">${td.protein} / ${protT} g</span></div>
+        <div class="bar-row"><span class="br-label">Carbs</span><span class="br-track"><span class="br-fill" style="width:58%;--bc:var(--hue-goals)"></span></span><span class="br-val">168 / 290 g</span></div>
+        <div class="bar-row"><span class="br-label">Fat</span><span class="br-track"><span class="br-fill" style="width:62%;--bc:var(--hue-workout)"></span></span><span class="br-val">47 / 76 g</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Protein — 30 days <span class="hint">target 150g</span></div>
+        <div class="chart-box"><canvas id="ch-protein"></canvas></div>
+      </div>
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Meal log — today</div>
+        <table class="data"><thead><tr><th>Time</th><th>Meal</th><th>Food</th><th style="text-align:right">kcal</th><th style="text-align:right">Protein</th></tr></thead>
+        <tbody>${meals.map(m => `<tr><td class="num">${m[0]}</td><td><b>${m[1]}</b></td><td>${m[2]}</td><td class="num" style="text-align:right">${m[3]}</td><td class="num" style="text-align:right">${m[4]}g</td></tr>`).join('')}</tbody></table>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Close the gap: +32g protein <span class="hint">AI suggestions</span></div>
+          ${SUGG.map(s => `<div class="bar-row"><span class="br-label" style="width:170px">${s[0]}</span><span class="br-track"><span class="br-fill" style="width:${s[1] * 2.2}%;--bc:var(--hue-nutrition)"></span></span><span class="br-val">+${s[1]}g</span></div>`).join('')}
+        </div>
+        <div class="mt">${insightCard(INSIGHTS[1])}</div>
+      </div>
+    </div>`;
+  mkChart('ch-protein', { type: 'bar',
+    data: { labels: d30.map(x => fmtD(x.d)), datasets: [
+      { data: d30.map(x => x.protein), backgroundColor: d30.map(x => x.protein >= protT ? cssVar('--hue-nutrition') : cssVar('--hue-nutrition') + '55'), borderRadius: 4 },
+      { type: 'line', data: d30.map(() => protT), borderColor: cssVar('--text-3'), borderDash: [4, 5], pointRadius: 0, borderWidth: 1 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle }, scales: { x: noGrid({ ticks: { maxTicksLimit: 8 } }), y: gridScale({ min: 80 }) } } });
+};
+
+/* ---------- WORKOUTS ---------- */
+RENDER.workouts = () => {
+  const lifted = workouts.filter(w => w.vol);
+  const weeks = [];
+  lifted.forEach(w => { const wk = Math.floor(w.i / 7); (weeks[wk] = weeks[wk] || []).push(w.vol); });
+  const wkVol = weeks.map(a => a ? Math.round(a.reduce((s, v) => s + v, 0) / 1000) : 0).filter((_, i) => weeks[i]);
+  const runs = workouts.filter(w => w.kind === 'run');
+  const kinds = { push: 0, pull: 0, legs: 0 };
+  lifted.forEach(w => kinds[w.kind]++);
+  const recent = workouts.slice(-6).reverse();
+  $('#view-workouts').innerHTML = `
+    ${viewHead('--hue-workout', 'MODULE 04 · WORKOUTS', 'Workouts',
+      'Push–pull–legs split, 4–5 sessions a week. Volume is trending up without eating into recovery.')}
+    <div class="grid g-4">
+      ${metricCard('Sessions (30d)', '--hue-workout', lifted.filter(w => w.i >= N_DAYS - 30).length, '', '+ ' + runs.filter(w => w.i >= N_DAYS - 30).length + ' runs', 'up')}
+      ${metricCard('Volume this week', '--hue-workout', (wkVol[wkVol.length - 1] || 0), 't', '↑ 18% vs 4-wk avg', 'up')}
+      ${metricCard('New PRs (30d)', '--hue-workout', PRS.filter(p => p.fresh).length, '', 'bench · squat', 'up')}
+      ${metricCard('Run distance (30d)', '--hue-workout', runs.filter(w => w.i >= N_DAYS - 30).reduce((s, w) => s + w.km, 0).toFixed(1), 'km', 'goal: 10k sub-55', 'flat')}
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Weekly lifting volume <span class="hint">tonnes · 13 weeks</span></div>
+        <div class="chart-box"><canvas id="ch-vol"></canvas></div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Personal records</div>
+          <table class="data"><tbody>${PRS.map(p => `<tr><td><b>${p.lift}</b>${p.fresh ? ' <span class="pill c" style="--pc:var(--hue-workout)">new</span>' : ''}</td><td class="num" style="text-align:right">${p.val}</td><td style="text-align:right;font-size:11px;color:var(--text-3)">${p.when}</td></tr>`).join('')}</tbody></table>
+        </div>
+        <div class="card mt">
+          <div class="card-title">Session mix (90d)</div>
+          ${Object.entries(kinds).map(([k, v]) => `<div class="bar-row"><span class="br-label" style="text-transform:capitalize">${k}</span><span class="br-track"><span class="br-fill" style="width:${v * 3.2}%;--bc:var(--hue-workout)"></span></span><span class="br-val">${v} sessions</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Recent sessions</div>
+        <table class="data"><thead><tr><th>Date</th><th>Type</th><th>Detail</th><th style="text-align:right">Duration</th></tr></thead>
+        <tbody>${recent.map(w => `<tr><td class="num">${fmtDW(w.d)}</td><td><span class="pill c" style="--pc:var(--hue-workout)">${w.kind}</span></td>
+          <td>${w.kind === 'run' ? w.km + ' km easy run' : w.sets.map(s => `${s.name} ${s.weight}×${s.sets}×${s.reps}`).join(' · ')}</td>
+          <td class="num" style="text-align:right">${w.min} min</td></tr>`).join('')}</tbody></table>
+      </div>
+      <div>${insightCard(INSIGHTS[6])}</div>
+    </div>`;
+  mkChart('ch-vol', { type: 'bar',
+    data: { labels: wkVol.map((_, i) => 'W' + (i + 1)), datasets: [{ data: wkVol, backgroundColor: wkVol.map((_, i) => i === wkVol.length - 1 ? cssVar('--hue-workout') : cssVar('--hue-workout') + '66'), borderRadius: 5 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle }, scales: { x: noGrid(), y: gridScale() } } });
+};
+
+/* ---------- FINANCE ---------- */
+RENDER.finance = () => {
+  const byCat = {};
+  tx.forEach(t => byCat[t.cat] = (byCat[t.cat] || 0) + t.amt);
+  const incomeTotal = INCOME.reduce((s, i) => s + i.amt, 0);
+  $('#view-finance').innerHTML = `
+    ${viewHead('--hue-finance', 'MODULE 05 · FINANCE', 'Finance',
+      'July, day 6 of 31. Rent and fixed costs are paid — what’s left is the variable envelope.')}
+    <div class="grid g-4">
+      ${metricCard('Income / month', '--hue-finance', '€' + (incomeTotal / 100).toLocaleString(), '', 'HiWi + family support', 'flat')}
+      ${metricCard('Spent MTD', '--hue-finance', eur(spentMTD), '', 'incl. rent €620', 'flat')}
+      ${metricCard('Budget left', '--hue-finance', eur(budgetLeft), '', 'of €1,350 · 25 days', 'up')}
+      ${metricCard('Projected savings', '--hue-finance', '€210', '', 'at current pace', 'up')}
+    </div>
+    <div class="grid g-32 mt">
+      <div class="card">
+        <div class="card-title">Spend by category <span class="hint">month to date</span></div>
+        <div class="chart-box"><canvas id="ch-cat"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cash flow — 6 months <span class="hint">€ income vs spend</span></div>
+        <div class="chart-box"><canvas id="ch-cash"></canvas></div>
+      </div>
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Transactions <span class="hint">July</span></div>
+        <table class="data"><thead><tr><th>Date</th><th>Merchant</th><th>Category</th><th style="text-align:right">Amount</th></tr></thead>
+        <tbody>${tx.slice().reverse().map(t => `<tr><td class="num">${t.d}</td><td><b>${t.who}</b></td><td><span class="pill c" style="--pc:${CATS[t.cat].hue}">${t.cat}</span></td><td class="num" style="text-align:right">−${eur(t.amt)}</td></tr>`).join('')}</tbody></table>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Budget envelopes <span class="hint">MTD vs monthly</span></div>
+          ${Object.entries(CATS).map(([k, c]) => { const s = byCat[k] || 0, p = Math.min(100, Math.round(100 * s / c.budget));
+            return `<div class="bar-row"><span class="br-label">${k}</span><span class="br-track"><span class="br-fill" style="width:${p}%;--bc:${p >= 95 ? 'var(--neg)' : c.hue}"></span></span><span class="br-val">${eur(s)} / ${eur(c.budget)}</span></div>`; }).join('')}
+        </div>
+        <div class="mt">${insightCard(INSIGHTS[3])}</div>
+      </div>
+    </div>`;
+  const cats = Object.keys(byCat);
+  mkChart('ch-cat', { type: 'doughnut',
+    data: { labels: cats, datasets: [{ data: cats.map(c => byCat[c] / 100), backgroundColor: cats.map(c => CATS[c].hue), borderWidth: 2, borderColor: cssVar('--surface') }]},
+    options: { cutout: '68%', plugins: { legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 10 } } }, tooltip: tipStyle } } });
+  mkChart('ch-cash', { type: 'bar',
+    data: { labels: cashflow6m.map(m => m.m), datasets: [
+      { data: cashflow6m.map(m => m.inc), backgroundColor: cssVar('--hue-finance') + '66', borderRadius: 5 },
+      { data: cashflow6m.map(m => m.exp), backgroundColor: cssVar('--hue-health') + '99', borderRadius: 5 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle }, scales: { x: noGrid(), y: gridScale() } } });
+};
+
+/* ---------- STUDY ---------- */
+RENDER.study = () => {
+  const d30 = last(studyByDay, 30), wkH = last(studyByDay, 7).reduce((s, h) => s + h, 0);
+  $('#view-study').innerHTML = `
+    ${viewHead('--hue-study', 'MODULE 06 · STUDY', 'Study',
+      'Exam season approaching: ML final on 28 Jul carries 60% of the grade. This week is milestone week.')}
+    <div class="grid g-4">
+      ${metricCard('Deadlines ≤ 7d', '--hue-study', deadlines7, '', 'closest Thu 9 Jul', 'down')}
+      ${metricCard('Hours this week', '--hue-study', wkH.toFixed(1), 'h', '↑ 12% vs 4-wk avg', 'up')}
+      ${metricCard('Pomodoros today', '--hue-study', pomosToday, '', 'target 6', 'flat')}
+      ${metricCard('Daily avg (30d)', '--hue-study', avg(d30).toFixed(1), 'h', 'weekends: 1.1h avg', 'flat')}
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Deadline queue <span class="hint">ranked by urgency × weight</span></div>
+        ${DEADLINES.map(dl => { const c = COURSES.find(c => c.name === dl.course);
+          return `<div class="insight" style="--ic:${c.hue}"><span class="i-dot"></span>
+          <div style="flex:1"><div class="i-title">${dl.title} <span class="pill c" style="--pc:${dl.days <= 4 ? 'var(--neg)' : c.hue};margin-left:6px">${dl.days}d</span></div>
+          <div class="i-body">${dl.course} · due ${dl.due} · ${dl.weight}</div>
+          <div class="bar-row" style="margin-top:8px;margin-bottom:0"><span class="br-track"><span class="br-fill" style="width:${dl.pct}%;--bc:${c.hue}"></span></span><span class="br-val">${dl.pct}%</span></div></div></div>`; }).join('')}
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Today’s AI study plan</div>
+          <ul class="brief-recs">
+            <li><span class="n">01</span><span><b>1.5h — DS milestone</b>: finish replication tests, then write the design doc section.</span></li>
+            <li><span class="n">02</span><span><b>1h — ML assignment 6</b>: data augmentation pipeline first; it blocks the rest.</span></li>
+            <li><span class="n">03</span><span><b>25 min — German</b>: one B1 listening set. Protects the streak before milestone week eats your evenings.</span></li>
+          </ul>
+        </div>
+        <div class="mt">${insightCard(INSIGHTS[4])}</div>
+      </div>
+    </div>
+    <div class="card mt">
+      <div class="card-title">Study hours — 30 days</div>
+      <div class="chart-box short"><canvas id="ch-study"></canvas></div>
+    </div>`;
+  const labels = last(days, 30).map(x => fmtD(x.d));
+  mkChart('ch-study', { type: 'bar',
+    data: { labels, datasets: [{ data: d30, backgroundColor: last(days, 30).map(x => x.wknd ? cssVar('--hue-study') + '55' : cssVar('--hue-study') + 'B3'), borderRadius: 4 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle }, scales: { x: noGrid({ ticks: { maxTicksLimit: 8 } }), y: gridScale() } } });
+};
+
+/* ---------- NOTES ---------- */
+function pillForSource(id, services = NOTE_SERVICES) {
+  const svc = services.find(s => s.id === id);
+  return `<span class="pill">${svc ? svc.name : id}</span>`;
+}
+RENDER.notes = () => {
+  const connected = NOTE_SERVICES.filter(s => s.connected);
+  const totalNotes = connected.reduce((sum, s) => sum + s.count, 0);
+  $('#view-notes').innerHTML = `
+    ${viewHead('--hue-notes', 'MODULE · NOTES', 'Notes',
+      'Connect the note-taking apps you already use and see everything in one searchable place. Concept view — connections below are simulated, not live syncs.')}
+    <div class="grid g-4">
+      ${metricCard('Total notes', '--hue-notes', totalNotes, '', connected.length + ' services connected', 'flat')}
+      ${metricCard('Connected services', '--hue-notes', connected.length, '/ ' + NOTE_SERVICES.length, 'Notion, Google Docs', 'flat')}
+      ${metricCard('Edited this week', '--hue-notes', NOTES.filter(n => n.edited.includes('ago') && !n.edited.includes('week')).length, '', 'across all sources', 'flat')}
+      ${metricCard('Tags in use', '--hue-notes', new Set(NOTES.map(n => n.tag)).size, '', 'Study, Career, Project…', 'flat')}
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">All notes <span class="hint">merged across connected services</span></div>
+        <table class="data">
+          <thead><tr><th>Title</th><th>Source</th><th>Tag</th><th>Last edited</th></tr></thead>
+          <tbody>
+            ${NOTES.map(n => `<tr>
+              <td><b>${n.title}</b></td>
+              <td>${pillForSource(n.source)}</td>
+              <td>${n.tag}</td>
+              <td class="num">${n.edited}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Connected services</div>
+        ${NOTE_SERVICES.map(s => `
+          <div class="svc-row">
+            <div class="svc-icon">${s.name.slice(0, 1)}</div>
+            <div class="svc-meta">
+              <div class="svc-name">${s.name} ${s.connected ? '<span class="svc-dot-live"></span>' : ''}</div>
+              <div class="svc-desc">${s.desc}</div>
+            </div>
+            ${s.connected ? `<span class="svc-count">${s.count} notes</span>` : ''}
+            <button class="svc-btn ${s.connected ? 'on' : ''}" data-svc="${s.id}">${s.connected ? 'Connected' : 'Connect'}</button>
+          </div>`).join('')}
+        <div style="font-size:11px;color:var(--text-3);margin-top:14px;line-height:1.5">Connecting a service here is a UI concept only — it toggles the mock state shown above rather than performing a real sign-in or sync.</div>
+      </div>
+    </div>`;
+  $('#view-notes').querySelectorAll('.svc-btn').forEach(btn => {
+    btn.onclick = () => {
+      const svc = NOTE_SERVICES.find(s => s.id === btn.dataset.svc);
+      svc.connected = !svc.connected;
+      if (svc.connected && svc.count === 0) svc.count = Math.floor(6 + Math.random() * 20);
+      RENDER.notes();
+    };
+  });
+};
+
+/* ---------- CALENDAR ---------- */
+RENDER.calendar = () => {
+  const connected = CAL_SERVICES.filter(s => s.connected);
+  const totalEvents = connected.reduce((sum, s) => sum + s.count, 0);
+  const days = [...new Set(CAL_EVENTS.map(e => e.day))];
+  $('#view-calendar').innerHTML = `
+    ${viewHead('--hue-calendar', 'MODULE · CALENDAR', 'Calendar',
+      'Connect Google Calendar and Microsoft Calendar to see every class, deadline, and personal event in one merged view. Concept view — connections below are simulated, not live syncs.')}
+    <div class="grid g-4">
+      ${metricCard('Upcoming events', '--hue-calendar', totalEvents, '', connected.length + ' calendars connected', 'flat')}
+      ${metricCard('Connected services', '--hue-calendar', connected.length, '/ ' + CAL_SERVICES.length, 'Google, Microsoft', 'flat')}
+      ${metricCard('Deadlines this week', '--hue-calendar', CAL_EVENTS.filter(e => e.tag === 'Deadline').length, '', 'across all sources', 'flat')}
+      ${metricCard('Busiest day', '--hue-calendar', 'Today', '', CAL_EVENTS.filter(e => e.day === 'Today').length + ' events scheduled', 'flat')}
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Upcoming <span class="hint">merged across connected calendars</span></div>
+        ${days.map(d => `
+          <div class="cal-day-label">${d}</div>
+          ${CAL_EVENTS.filter(e => e.day === d).map(e => `
+            <div class="cal-row">
+              <div class="cal-time">${e.time}</div>
+              <div class="cal-title">${e.title}</div>
+              ${pillForSource(e.source, CAL_SERVICES)}
+              <span class="pill" style="margin-left:6px">${e.tag}</span>
+            </div>`).join('')}
+        `).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Connected calendars</div>
+        ${CAL_SERVICES.map(s => `
+          <div class="svc-row">
+            <div class="svc-icon">${s.name.slice(0, 1)}</div>
+            <div class="svc-meta">
+              <div class="svc-name">${s.name} ${s.connected ? '<span class="svc-dot-live"></span>' : ''}</div>
+              <div class="svc-desc">${s.desc}</div>
+            </div>
+            ${s.connected ? `<span class="svc-count">${s.count} events</span>` : ''}
+            <button class="svc-btn ${s.connected ? 'on' : ''}" data-svc="${s.id}">${s.connected ? 'Connected' : 'Connect'}</button>
+          </div>`).join('')}
+        <div style="font-size:11px;color:var(--text-3);margin-top:14px;line-height:1.5">Connecting a calendar here is a UI concept only — it toggles the mock state shown above rather than performing a real sign-in or sync.</div>
+      </div>
+    </div>`;
+  $('#view-calendar').querySelectorAll('.svc-btn').forEach(btn => {
+    btn.onclick = () => {
+      const svc = CAL_SERVICES.find(s => s.id === btn.dataset.svc);
+      svc.connected = !svc.connected;
+      if (svc.connected && svc.count === 0) svc.count = Math.floor(3 + Math.random() * 10);
+      RENDER.calendar();
+    };
+  });
+};
+
+/* ---------- HABITS ---------- */
+RENDER.habits = () => {
+  $('#view-habits').innerHTML = `
+    ${viewHead('--hue-habits', 'MODULE 07 · HABITS', 'Habits',
+      'Six daily habits. The dot matrix shows the last 14 days — outlined cell is today.')}
+    <div class="grid g-4">
+      ${metricCard('Overall adherence', '--hue-habits', Math.round(avg(HABITS.map(h => h.adherence))), '%', '90-day window', 'flat')}
+      ${metricCard('Best streak', '--hue-habits', Math.max(...HABITS.map(h => h.streak)), 'days', 'Coding (1h+)', 'up')}
+      ${metricCard('Done today', '--hue-habits', HABITS.filter(h => h.log[N_DAYS - 1]).length + ' / ' + HABITS.length, '', '2 remaining tonight', 'flat')}
+      ${metricCard('XP this week', '--hue-habits', '+340', '', 'level 12 → 13 at 3,000', 'up')}
+    </div>
+    <div class="card mt">
+      <div class="card-title">Habit matrix <span class="hint">last 14 days</span></div>
+      ${HABITS.map(h => `
+        <div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="width:170px;flex-shrink:0">
+            <div style="font-size:13px;font-weight:600">${h.name}</div>
+            <div class="mono" style="font-size:10.5px;color:var(--text-3);margin-top:2px">${h.adherence}% · 🔥 ${h.streak}d</div>
+          </div>
+          <div class="dot-matrix" style="flex:1;--dc:${h.hue}">
+            ${last(h.log, 14).map((on, i) => `<span class="dm-cell ${on ? 'on' : ''} ${i === 13 ? 'today' : ''}"></span>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="grid g-23 mt">
+      <div class="card">
+        <div class="card-title">Weekday vs weekend adherence</div>
+        <div class="chart-box short"><canvas id="ch-habits"></canvas></div>
+      </div>
+      <div>${insightCard(INSIGHTS[5])}</div>
+    </div>`;
+  const wd = HABITS.map(h => Math.round(100 * h.log.filter((v, i) => v && !days[i].wknd).length / days.filter(d => !d.wknd).length));
+  const we = HABITS.map(h => Math.round(100 * h.log.filter((v, i) => v && days[i].wknd).length / days.filter(d => d.wknd).length));
+  mkChart('ch-habits', { type: 'bar',
+    data: { labels: HABITS.map(h => h.name.split(' ')[0]), datasets: [
+      { data: wd, backgroundColor: cssVar('--hue-habits'), borderRadius: 4 },
+      { data: we, backgroundColor: cssVar('--hue-habits') + '55', borderRadius: 4 }]},
+    options: { plugins: { legend: { display: false }, tooltip: tipStyle }, scales: { x: noGrid(), y: gridScale({ max: 100 }) } } });
+};
+
+/* ---------- GOALS ---------- */
+RENDER.goals = () => {
+  $('#view-goals').innerHTML = `
+    ${viewHead('--hue-goals', 'MODULE 08 · GOALS', 'Goals',
+      'Five active goals. ETAs are recomputed nightly from your actual pace, not your intentions.')}
+    <div class="grid g-2">
+      ${GOALS.map(g => `<div class="card">
+        <div class="card-title"><span><span class="pill c" style="--pc:${g.hue.startsWith('var') ? `var(${g.hue.slice(4, -1)})` : g.hue}">${g.domain}</span></span><span class="hint mono">${g.pct}%</span></div>
+        <div style="font-size:16px;font-weight:700;letter-spacing:-0.01em">${g.title}</div>
+        <div style="font-size:12.5px;color:var(--text-2);margin-top:4px">${g.cur} · <b>${g.eta}</b></div>
+        <div class="bar-row" style="margin:14px 0 12px"><span class="br-track"><span class="br-fill" style="width:${g.pct}%;--bc:${g.hue}"></span></span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${g.milestones.map(m => `<span class="pill" style="${m.includes('✓') ? 'color:var(--pos)' : ''}">${m}</span>`).join('')}</div>
+      </div>`).join('')}
+      <div class="card" style="display:grid;place-items:center;border-style:dashed;color:var(--text-3);font-size:13px;min-height:150px;cursor:pointer">＋ New goal</div>
+    </div>`;
+};
+
+/* ---------- AI COACH ---------- */
+const COACH_RESPONSES = [
+  { k: /tired|fatigue|recovery|energy/i, r: `Three signals explain it. <b>1)</b> Your sleep midpoint shifted 1.9h later over the weekend — Monday recovery after a shifted weekend averages 61% vs your 78% baseline. <b>2)</b> Friday and Saturday were 6h10m and 6h25m — you're carrying ${'~'}1h of acute debt. <b>3)</b> Yesterday's push session was your highest volume in 3 weeks. Recovery today is 81%, so you're rebounding — keep tonight's bedtime at 23:30 and tomorrow should be fully restored.<span class="src">sources: sleep_logs · workout_sets · recovery model</span>` },
+  { k: /overspend|spending|money|budget|afford/i, r: `Slightly, in one category. Overall you're fine — €486 of the €1,350 envelope left with 25 days to go, projected savings <b>€210</b>. The flag is <b>eating out: pacing €148 vs €119 in June (+24%)</b>. Everything else is at or under June's pace. Two more home-cooked dinners per week closes the gap entirely.<span class="src">sources: transactions · MTD pace model</span>` },
+  { k: /study|studying|consistent|exam|deadline/i, r: `Your studying is consistent on weekdays — <b>2.8h/day average, 84% of weekdays hit 1h+</b> — but weekends drop to 1.1h. That's fine as designed rest, except exam season starts now: ML final (60% of grade) is in 22 days. My suggestion: keep weekends light but fixed — one 90-minute morning block — and you'll add ${'~'}12h of prep without touching your recovery.<span class="src">sources: study_sessions · assignments</span>` },
+  { k: /habit|improve|worst/i, r: `Two habits need attention. <b>Meditation (58%)</b> — lowest adherence, no anchor. Try attaching it to your existing post-lunch walk. <b>German on weekends (39% vs 84% weekdays)</b> — your B1 exam is 14 Aug, and weekend gaps are where vocabulary decays. Coding, gym, and reading are all healthy — don't touch what works.<span class="src">sources: habit_logs · weekday split</span>` },
+  { k: /protein|eat|meal|dinner/i, r: `You're at <b>118g of 150g</b> with dinner left. Post-gym, the fastest close is a skyr bowl (+28g) plus whatever dinner you had planned. If you're cooking: the soy chunk curry hits +34g and you have all ingredients from Friday's REWE run.<span class="src">sources: meals · pantry inference</span>` },
+  { k: /week|summary|summarize/i, r: `<b>Last 7 days:</b> Weight 79.6 → 79.4 kg (on pace). Sleep averaged 7h18m but the weekend shift cost you Monday. Training: 4 lifts + 1 run, bench PR at 82.5 kg. Study: 16.2h, DS milestone at 60%. Spending: normal except eating out. Habits: 21-day coding streak intact. <b>One thing to fix this week: bedtime consistency.</b> It's the single lever touching recovery, study output, and your habit streaks.<span class="src">sources: daily_summaries · all modules</span>` },
+];
+const COACH_DEFAULT = `I can see all ten modules. Ask me things like <b>"Why am I tired?"</b>, <b>"Am I overspending?"</b>, <b>"How consistent is my studying?"</b>, or <b>"Summarize my week"</b> — I'll answer from your actual data and cite the sources.`;
+
+RENDER.coach = () => {
+  $('#view-coach').innerHTML = `
+    ${viewHead('--hue-coach', 'MODULE 09 · AI COACH', 'Coach',
+      'Answers come from your data via analysis tools — every claim cites its source tables.')}
+    <div class="chat-frame">
+      <div class="chat-scroll" id="chatScroll">
+        <div class="msg ai">Morning, Himnish. Recovery's back at <b>81%</b> — nice rebound. I flagged one thing: the DS milestone Thursday is 60% done and it's your heaviest-weighted deadline this week. Want a plan for the day?<span class="src">sources: sleep_logs · assignments</span></div>
+      </div>
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="Ask about any module — sleep, money, study, habits…" autocomplete="off">
+        <button class="chat-send" id="chatSend">Send</button>
+      </div>
+    </div>
+    <div class="quick mt">
+      ${['Why am I tired?', 'Am I overspending?', 'How consistent is my studying?', 'What habits need improvement?', 'Summarize my week'].map(q => `<button onclick="askCoach('${q}')">${q}</button>`).join('')}
+    </div>`;
+  $('#chatSend').onclick = () => askCoach($('#chatInput').value);
+  $('#chatInput').onkeydown = e => { if (e.key === 'Enter') askCoach($('#chatInput').value); };
+};
+function askCoach(q) {
+  q = (q || '').trim(); if (!q) return;
+  const scroll = $('#chatScroll'); if (!scroll) return;
+  $('#chatInput').value = '';
+  scroll.insertAdjacentHTML('beforeend', `<div class="msg user"></div>`);
+  scroll.lastElementChild.textContent = q;
+  scroll.insertAdjacentHTML('beforeend', `<div class="msg ai typing"><i></i><i></i><i></i></div>`);
+  scroll.scrollTop = scroll.scrollHeight;
+  const hit = COACH_RESPONSES.find(c => c.k.test(q));
+  setTimeout(() => {
+    scroll.lastElementChild.remove();
+    scroll.insertAdjacentHTML('beforeend', `<div class="msg ai">${hit ? hit.r : COACH_DEFAULT}</div>`);
+    scroll.scrollTop = scroll.scrollHeight;
+  }, 900 + Math.random() * 500);
+}
+
+/* ---------- DAILY BRIEFING ---------- */
+RENDER.briefing = () => {
+  $('#view-briefing').innerHTML = `
+    ${viewHead('--accent', 'MODULE 10 · DAILY BRIEFING', 'Daily Briefing',
+      'Generated every morning at 06:00 from yesterday’s rollup and today’s calendar.')}
+    <div class="brief-doc">
+      <div class="b-date">Morning briefing · Monday 6 July 2026 · 06:00</div>
+      <h2>Good morning, Himnish.</h2>
+      <p class="b-lede">Solid recovery, a clear deadline picture, and one nutrition gap to close. Today is about the DS milestone — everything else is maintenance.</p>
+      <div class="brief-grid">
+        <div><div class="bg-l">Sleep</div><div class="bg-v">7h 24m</div></div>
+        <div><div class="bg-l">Recovery</div><div class="bg-v" style="color:var(--pos)">81%</div></div>
+        <div><div class="bg-l">Protein yday</div><div class="bg-v">143g</div></div>
+        <div><div class="bg-l">Calories yday</div><div class="bg-v">2,280</div></div>
+        <div><div class="bg-l">Budget left</div><div class="bg-v">€486</div></div>
+        <div><div class="bg-l">Study target</div><div class="bg-v">2.5h</div></div>
+        <div><div class="bg-l">Workout</div><div class="bg-v">Push day</div></div>
+        <div><div class="bg-l">Habits due</div><div class="bg-v">6</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px">Recommendations</div>
+      <ul class="brief-recs">
+        <li><span class="n">01</span><span><b>Front-load the DS milestone.</b> 1.5h this morning takes it from 60% → ~85% and de-risks Thursday. It's worth 25% of the grade — nothing else today compares.</span></li>
+        <li><span class="n">02</span><span><b>Sleep 20 minutes earlier tonight.</b> Weekend midpoint drift is your one recurring recovery leak; 23:30 tonight resets the rhythm before deadline week.</span></li>
+        <li><span class="n">03</span><span><b>Water is behind pace.</b> 1.45L by 09:00 projections put you at 2.4L — carry the bottle to the library.</span></li>
+        <li><span class="n">04</span><span><b>Push day at 17:30 is a green light.</b> Recovery 81%, HRV 68ms. Bench target 82.5 kg × 5 — matching your PR on the first working set.</span></li>
+      </ul>
+    </div>
+    <div class="card mt" style="max-width:720px">
+      <div class="card-title">Previous briefings</div>
+      <table class="data">
+        <tbody>
+          <tr><td class="num">Sun 5 Jul</td><td>Recovery day — flagged late Saturday bedtime, suggested light cardio only.</td><td class="num" style="text-align:right">read</td></tr>
+          <tr><td class="num">Sat 4 Jul</td><td>Weekend plan — German practice before social plans; grocery run reminder.</td><td class="num" style="text-align:right">read</td></tr>
+          <tr><td class="num">Fri 3 Jul</td><td>Deadline preview — mapped the coming week’s three due dates.</td><td class="num" style="text-align:right">read</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+};
+
+/* ---------- ABOUT THIS PROJECT (case study) ---------- */
+RENDER.about = () => {
+  $('#view-about').innerHTML = `
+    ${viewHead('--accent', 'CASE STUDY', 'About This Project',
+      'What StudentOS is, what it isn\u2019t, and exactly who did what.')}
+    <div class="brief-doc">
+      <div class="b-date">Concept product · Interactive prototype</div>
+      <h2>The problem</h2>
+      <p class="b-lede">As a student, my sleep, study time, workouts, spending, and habits all lived in different apps and notebooks that never talked to each other. I couldn't see how one area of my life was affecting another — for example, that a late Saturday bedtime was quietly costing me a study session on Monday. StudentOS is my answer to that: a single dashboard that pulls every part of student life into one place.</p>
+
+      <div class="brief-grid">
+        <div><div class="bg-l">Modules</div><div class="bg-v">11</div></div>
+        <div><div class="bg-l">Role</div><div class="bg-v" style="font-size:14px">Product &amp; UX</div></div>
+        <div><div class="bg-l">Build tool</div><div class="bg-v" style="font-size:14px">Claude Code</div></div>
+        <div><div class="bg-l">Status</div><div class="bg-v" style="font-size:14px">Prototype</div></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px">What I actually did</div>
+      <ul class="brief-recs">
+        <li><span class="n">01</span><span><b>Defined the problem and the product vision.</b> I decided this should be a unified system, not another single-purpose tracker, and scoped which eleven areas of student life it would cover — including, later, adding Notes and Calendar once it was clear that scattered documents and schedules were the same problem as scattered health and study data.</span></li>
+        <li><span class="n">02</span><span><b>Designed the information architecture.</b> I planned how modules would relate to each other, what belonged on the home dashboard versus a detail view, and how insights would surface across modules rather than staying siloed.</span></li>
+        <li><span class="n">03</span><span><b>Designed the UX and interaction patterns.</b> The command palette (⌘K), the daily briefing document, the AI Coach conversation flow, and the visual hierarchy of each module were my design decisions, refined over several iterations.</span></li>
+        <li><span class="n">04</span><span><b>Directed the build with Claude Code.</b> I did not hand-write the implementation. I prompted, reviewed, and iteratively refined the code through many rounds — catching things that didn't match my design intent and asking for changes — but the underlying code generation was AI-assisted.</span></li>
+      </ul>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:22px 0 6px">What this is not</div>
+      <ul class="brief-recs">
+        <li><span class="n">–</span><span>It is not a production application and has no real users or real data — every number in it is illustrative, not live.</span></li>
+        <li><span class="n">–</span><span>The Notes and Calendar modules don't actually connect to Notion, Google, or Microsoft. Clicking "Connect" toggles a mock state so the concept can be seen and tested — no real sign-in or data sync happens.</span></li>
+        <li><span class="n">–</span><span>The AI Coach does not call a real language model. It matches your question against a set of prewritten response patterns — it's a designed <i>concept</i> of a coaching interface, not a working AI system.</span></li>
+        <li><span class="n">–</span><span>I have not run formal user testing on it yet. That's the next step before I'd call any of the UX decisions validated rather than just reasoned through.</span></li>
+      </ul>
+
+      <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:22px 0 6px">What I'd do next</div>
+      <p class="b-lede" style="margin-bottom:0">Run 5–8 short interviews with other students to test whether the module set and the daily briefing actually match how they think about their day — then rework whatever the data disagrees with. Roadmap ideas beyond that include real OAuth integrations for Notes and Calendar, wearable data, and eventually a real AI integration for the coach if the concept proves out.</p>
+    </div>`;
+};
+
+/* ================================================================
+   INTERACTIONS — palette, theme, keyboard, boot
+   ================================================================ */
+const ACTIONS = [
+  { label: 'Toggle dark / light mode', k: '⇧T', run: toggleTheme },
+  { label: 'Ask the coach: Why am I tired?', k: '', run: () => { showView('coach'); setTimeout(() => askCoach('Why am I tired?'), 300); } },
+  { label: 'Log a meal', k: '', run: () => showView('nutrition') },
+  { label: 'Add an expense', k: '', run: () => showView('finance') },
+  { label: 'Read today’s briefing', k: '', run: () => showView('briefing') },
+];
+let palSel = 0;
+function paletteItems(q) {
+  q = q.toLowerCase();
+  const mods = MODULES.filter(m => m.label.toLowerCase().includes(q)).map(m => ({ label: 'Go to ' + m.label, hue: m.hue, k: '', run: () => showView(m.id) }));
+  const acts = ACTIONS.filter(a => a.label.toLowerCase().includes(q));
+  return [...mods, ...acts];
+}
+function renderPalette() {
+  const items = paletteItems($('#paletteInput').value);
+  palSel = Math.max(0, Math.min(palSel, items.length - 1));
+  $('#paletteList').innerHTML = items.length ? items.map((it, i) =>
+    `<button class="pal-item ${i === palSel ? 'sel' : ''}" data-i="${i}" style="--sig:var(${it.hue || '--accent'})"><span class="sig"></span>${it.label}${it.k ? `<span class="k">${it.k}</span>` : ''}</button>`).join('')
+    : '<div class="pal-empty">No matches. Try a module name or an action.</div>';
+  document.querySelectorAll('.pal-item').forEach(b => b.onclick = () => { closePalette(); items[+b.dataset.i].run(); });
+}
+function openPalette() { $('#paletteOverlay').classList.add('open'); $('#paletteInput').value = ''; palSel = 0; renderPalette(); $('#paletteInput').focus(); }
+function closePalette() { $('#paletteOverlay').classList.remove('open'); }
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  showView(currentView); // re-render so charts pick up new token values
+}
+
+$('#openPalette').onclick = openPalette;
+$('#themeBtn').onclick = toggleTheme;
+$('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
+$('#paletteOverlay').onclick = e => { if (e.target === $('#paletteOverlay')) closePalette(); };
+$('#paletteInput').oninput = () => { palSel = 0; renderPalette(); };
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#paletteOverlay').classList.contains('open') ? closePalette() : openPalette(); }
+  if (!$('#paletteOverlay').classList.contains('open')) return;
+  const items = paletteItems($('#paletteInput').value);
+  if (e.key === 'Escape') closePalette();
+  if (e.key === 'ArrowDown') { e.preventDefault(); palSel++; renderPalette(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); palSel--; renderPalette(); }
+  if (e.key === 'Enter' && items[palSel]) { closePalette(); items[palSel].run(); }
+});
+
+/* ---------- boot ---------- */
+renderStatusbar();
+renderNav();
+showView('home');
+</script>
+</body>
+</html>
