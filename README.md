@@ -1,511 +1,108 @@
 # StudentOS
 
-> **The Operating System for Student Life — and the foundation for a future Personal Operating System.**
+> A concept dashboard exploring what it would look like to unify academics, health, finance, and productivity into one student life operating system.
 
-An AI-assisted concept product exploring how academics, health, productivity, finance, and personal growth can be unified into one intelligent dashboard.
+An AI-assisted concept product — not a production application — built to explore product thinking, information architecture, and dashboard UX.
 
 🌐 **Live Demo:** https://himnishahir05.github.io/StudentOS/
 
----
-
-# Overview
-
-StudentOS is an AI-assisted concept product that explores what a unified personal operating system could look like.
-
-The current prototype focuses on university students by bringing together academics, health, sleep, workouts, nutrition, finance, productivity, habits, goals, notes, calendars, and AI-powered insights into a single dashboard experience.
-
-Instead of switching between multiple disconnected applications throughout the day, StudentOS demonstrates how these systems can work together to create a more organized, data-driven, and personalized experience.
-
-This project is intentionally presented as a concept prototype focused on validating product ideas, user experience, dashboard architecture, and information design before building production-ready functionality.
+![StudentOS home dashboard](assets/screenshot-home.png)
 
 ---
 
-# The Problem
+## Overview
 
-Modern life is fragmented.
+StudentOS is a concept prototype exploring what a unified student dashboard could look like — bringing academics, health, sleep, workouts, nutrition, finance, study, habits, goals, notes, and calendars into a single interface instead of a dozen disconnected apps.
 
-Students—and most people—rely on numerous independent applications every day:
+This is intentionally a concept-stage project focused on validating product ideas, UX, and information architecture — not a finished, production-ready application.
 
-- Calendar
-- Notes
-- Study planner
-- Task manager
-- Budget tracker
-- Sleep tracker
-- Fitness tracker
-- Nutrition tracker
-- Habit tracker
-- Goal tracker
+## The Problem
 
-While these applications perform their individual tasks well, they rarely communicate with one another.
+Students juggle a separate app for almost everything: calendar, notes, study planner, budget tracker, sleep tracker, fitness tracker, habit tracker. These tools rarely talk to each other, so connections get missed — a late Saturday night quietly costs Monday's study session, a tight week of deadlines quietly tanks recovery and workout quality. StudentOS explores what changes when these systems share one view.
 
-As a result, users miss valuable connections between different aspects of their lives.
+## Solution
 
-For example:
+Instead of another single-purpose tracker, StudentOS acts as a unified interface where a student can see how the different parts of their week actually connect, with a daily briefing and cross-module insights pulling the pieces together.
 
-- Poor sleep impacts academic performance.
-- Recovery affects workout quality.
-- Spending habits influence financial stress.
-- Exercise improves productivity.
-- Deadlines affect recovery and mental wellbeing.
+## Screenshots
 
-StudentOS explores what becomes possible when all of these systems operate together instead of separately.
+| Home Dashboard | Notes | Calendar |
+|---|---|---|
+| ![Home](assets/screenshot-home.png) | ![Notes](assets/screenshot-notes.png) | ![Calendar](assets/screenshot-calendar.png) |
 
----
+## Current Features
 
-# Solution
+**Dashboard** — unified overview, daily metrics, cross-module summaries, quick actions
+**Daily Briefing** — a generated daily report combining study priorities, recovery, workouts, nutrition, and budget into one recommendation set
+**AI Coach** — a prototype conversational interface (see *Current Limitations* below — responses are pattern-matched, not a live model)
+**Health** — weight, body composition, BMI, hydration, trend analysis
+**Sleep** — duration, recovery, HRV, resting heart rate, sleep debt
+**Nutrition** — calories, protein, macros, daily targets
+**Workouts** — training history, PRs, volume tracking
+**Finance** — budget tracking, spending categories, cash flow
+**Study** — courses, assignments, deadlines, Pomodoro tracking
+**Notes** — concept integrations for Notion, Google Docs, Evernote, OneNote, Obsidian
+**Calendar** — concept integrations for Google Calendar, Microsoft Calendar, Apple Calendar
+**Habits** — streaks, heatmaps, consistency tracking
+**Goals** — long-term progress across fitness, learning, career, and finance
 
-StudentOS introduces the idea of a unified operating system that connects every major aspect of daily life.
+## Design Highlights
 
-Rather than acting as another productivity application, StudentOS serves as a central interface where users can understand, organize, and improve their everyday lives using integrated analytics and AI-powered insights.
+Command palette (⌘K) · dark/light mode · modular dashboard architecture · system status bar · cross-module insight cards · consistent visual language
 
-Instead of showing isolated information, StudentOS combines data from multiple modules to generate contextual recommendations and personalized daily guidance.
+## Technologies
 
----
+HTML5, CSS3, JavaScript, Chart.js, Google Fonts, Claude Code (AI-assisted development)
 
-# Current Features
+## My Role
 
-## Dashboard
+I identified the problem, defined the product vision, designed the information architecture, and made every UX and interaction design decision — the command palette, the daily briefing format, the module structure, and the visual hierarchy. I directed the build using Claude Code (AI-assisted development): prompting, reviewing, and iterating on the implementation through multiple rounds. I did not hand-write the underlying code.
 
-- Unified overview
-- Daily metrics
-- Cross-module summaries
-- AI-generated insights
-- Quick actions
+## Current Status: Concept Prototype
 
----
+This is intentionally a concept-stage prototype, not a production app. Current limitations:
 
-## Daily Briefing
-
-A personalized report that combines information across every module to recommend how the user should approach the day.
-
-Examples include:
-
-- Study priorities
-- Recovery recommendations
-- Workout planning
-- Protein reminders
-- Budget awareness
-- Deadline prioritization
-
----
-
-## AI Coach
-
-Prototype conversational assistant capable of providing personalized guidance using information from multiple modules.
-
-Examples include:
-
-- Study coaching
-- Productivity planning
-- Health recommendations
-- Nutrition advice
-- Recovery analysis
-- Habit coaching
-- Goal planning
-
----
-
-## Health
-
-- Weight tracking
-- Body composition
-- BMI
-- Step count
-- Hydration
-- Trend analysis
-- Goal progress
-
----
-
-## Sleep
-
-- Sleep duration
-- Recovery
-- HRV
-- Resting heart rate
-- Circadian rhythm analysis
-- Sleep debt tracking
-- Sleep consistency
-
----
-
-## Nutrition
-
-- Calories
-- Protein
-- Macronutrients
-- Daily targets
-- Nutrition analytics
-
----
-
-## Workouts
-
-- Training history
-- Running
-- Personal records
-- Volume tracking
-- Performance trends
-
----
-
-## Finance
-
-- Budget tracking
-- Spending categories
-- Transaction history
-- Cash flow
-- Budget insights
-
----
-
-## Study
-
-- Courses
-- Assignments
-- Deadlines
-- Pomodoro tracking
-- Study hours
-- Academic progress
-
----
-
-## Notes
-
-Concept integrations for:
-
-- Notion
-- Google Docs
-- Evernote
-- OneNote
-- Obsidian
-
----
-
-## Calendar
-
-Concept integrations for:
-
-- Google Calendar
-- Microsoft Calendar
-- Apple Calendar
-
----
-
-## Habits
-
-- Habit tracking
-- Streaks
-- Heatmaps
-- Consistency analytics
-- Progress monitoring
-
----
-
-## Goals
-
-Tracks long-term progress across multiple areas including:
-
-- Fitness
-- Learning
-- Career
-- Finance
-- Running
-
----
-
-# Product Vision
-
-StudentOS intentionally begins with university students.
-
-As a university student myself, I experience first-hand the challenge of managing academics, health, finances, productivity, and personal goals across many disconnected applications.
-
-Students provide an excellent starting point for validating the concept because they regularly interact with multiple systems while balancing competing priorities.
-
-However, StudentOS is **not intended to remain a student-only product.**
-
-The long-term vision is to evolve StudentOS into a **Personal Operating System** that adapts to every user's unique role and lifestyle.
-
-Instead of building separate applications for different audiences, StudentOS will personalize itself from the very beginning.
-
-During onboarding, users will simply choose who they are.
-
-For example:
-
-- Student
-- Professional
-- Employee
-- Freelancer
-- Founder
-- Business Owner
-- Manager
-- Creator
-- Researcher
-
-StudentOS will then automatically customize:
-
-- Dashboard
-- Modules
-- Analytics
-- Recommendations
-- AI coaching
-- Workflows
-- Goals
-- Daily briefings
-
-based on that person's role, priorities, and responsibilities.
-
-The goal is to build one platform that feels purpose-built for every individual.
-
----
-
-# Design Highlights
-
-StudentOS includes several product-focused interaction patterns:
-
-- Command Palette (⌘K)
-- Dark / Light Mode
-- AI Coach
-- Daily Briefing
-- Modular Dashboard Architecture
-- System Status Bar
-- Cross-module Insights
-- Responsive Layout
-- Consistent Visual Language
-
----
-
-# Technologies
-
-- HTML5
-- CSS3
-- JavaScript
-- Chart.js
-- Google Fonts
-- Claude Code (AI-assisted development)
-
----
-
-# My Role
-
-StudentOS was created as a personal product concept.
-
-I was responsible for:
-
-- Identifying the problem
-- Defining the product vision
-- User research
-- Feature prioritization
-- Product roadmap
-- UX design
-- Information architecture
-- Dashboard design
-- User flows
-- Interaction design
-- Visual hierarchy
-- Product iteration
-- Testing and refinement
-
-The interactive prototype was developed using AI-assisted development (Claude Code), while I directed the product vision, feature planning, user experience, architecture, and continuous refinement.
-
----
-
-# Current Status
-
-🚧 **Concept Prototype**
-
-StudentOS is intentionally presented as an interactive concept prototype.
-
-The focus is on validating product ideas, user experience, dashboard architecture, and interaction design before investing in production functionality.
-
-Current limitations include:
-
-- No backend
-- No authentication
-- No cloud database
-- No real API integrations
+- No backend, authentication, or cloud database
+- No real API integrations — Notes and Calendar "connections" are simulated toggles, not live OAuth sync
+- No live AI model — the AI Coach matches input against prewritten response patterns
 - No wearable synchronization
-- No live AI model
-- Mock data throughout the application
+- Mock data throughout
+- No formal user testing has been run yet — the next real step before calling any UX decision validated rather than reasoned-through
 
-These limitations are intentional and allow rapid iteration of the product concept.
+These constraints are intentional and let the concept iterate quickly before any real engineering investment.
 
----
+## Roadmap
 
-# Future Roadmap
+Near-term, in priority order:
 
-The long-term roadmap is to transform StudentOS into a complete Personal Operating System with support for multiple user roles and deep ecosystem integrations.
+1. Run 5–8 short user interviews with other students to test whether the module set and daily briefing actually match how people think about their day
+2. Add a real calendar integration (Google Calendar API) as the first real (non-mock) connection
+3. Explore whether the AI Coach is worth wiring to a real model, based on what interviews turn up
 
-## Adaptive Personalization
+Longer-term ideas (unvalidated): wearable data, a lightweight mobile view, and a version of the "one dashboard" idea that isn't student-specific. These are directions, not commitments — validation comes first.
 
-- Role-based onboarding
-- Personalized dashboards
-- Dynamic modules
-- Adaptive workflows
-- Context-aware recommendations
-- AI-generated daily briefings
+## Skills Demonstrated
 
----
+**Product:** product thinking, product strategy, feature prioritization, roadmapping
+**UX:** information architecture, dashboard design, interaction design, user-centered design
+**Business:** systems thinking, problem solving, analytical thinking
+**Technical:** HTML5, CSS3, JavaScript, Chart.js, responsive design, AI-assisted development
 
-## Health Ecosystem
+## License
 
-Planned integrations include:
+MIT — see [LICENSE](LICENSE). Free to view, learn from, and reuse with credit.
 
-- Google Health Connect
-- Apple Health
-- Fitbit
-- WHOOP
-- Polar
-- Garmin
-- Amazfit
-- Oura Ring
-- Withings
-- Samsung Health
+## Feedback
 
-Future health analytics will combine:
+StudentOS is an evolving concept — feedback and ideas are welcome via Issues.
 
-- Sleep
-- Recovery
-- Heart rate
-- HRV
-- Workouts
-- Nutrition
-- Stress
-- Body composition
-- Daily readiness
-
-to generate intelligent recommendations across the platform.
-
----
-
-## Productivity Ecosystem
-
-Planned integrations include:
-
-- Google Calendar
-- Outlook Calendar
-- Apple Calendar
-- Notion
-- Obsidian
-- Google Docs
-- Microsoft 365
-- Todoist
-- TickTick
-- Trello
-- Jira
-- GitHub
-
----
-
-## Career
-
-Future modules include:
-
-- Internship tracker
-- Job application manager
-- Resume analytics
-- Portfolio management
-- Interview preparation
-- Skill development
-
----
-
-## Finance
-
-Future improvements include:
-
-- Bank integrations
-- Investment tracking
-- Subscription management
-- Budget forecasting
-- Spending insights
-
----
-
-## Artificial Intelligence
-
-Future AI capabilities include:
-
-- Personalized coaching
-- Daily planning
-- Productivity optimization
-- Study assistance
-- Health coaching
-- Financial guidance
-- Habit recommendations
-- Long-term trend analysis
-- Cross-module insights
-- Predictive analytics
-
----
-
-# Long-Term Vision
-
-My goal is not simply to build another productivity application.
-
-I want to build a **Personal Operating System** that becomes the central interface for managing everyday life.
-
-Rather than forcing users to switch between numerous disconnected applications, StudentOS aims to combine health, productivity, finance, education, calendars, notes, goals, and future AI services into one intelligent platform.
-
-By connecting these systems together, StudentOS can generate insights that would not be possible when each application operates independently.
-
-The current student-focused prototype represents the first step toward that broader vision.
-
----
-
-# Skills Demonstrated
-
-## Product
-
-- Product Thinking
-- Product Strategy
-- Product Discovery
-- Feature Prioritization
-- Product Roadmapping
-
-## User Experience
-
-- UX Design
-- Information Architecture
-- Dashboard Design
-- Interaction Design
-- User-Centered Design
-
-## Business
-
-- Systems Thinking
-- Problem Solving
-- Analytical Thinking
-- Process Design
-
-## Technical
-
-- HTML5
-- CSS3
-- JavaScript
-- Chart.js
-- Responsive Design
-- AI-assisted Development
-
----
-
-# Feedback
-
-StudentOS is an evolving concept, and feedback, ideas, and suggestions are always welcome.
-
----
-
-# Author
+## Author
 
 **Himnish Sorathiya**
-
 📍 Berlin, Germany
-
 GitHub: https://github.com/himnishahir05
-
-LinkedIn: *www.linkedin.com/in/himnish-sorathiya-9a384b306*
+LinkedIn: https://www.linkedin.com/in/himnish-sorathiya-9a384b306
 
 ---
 
-⭐ If you enjoyed exploring StudentOS, consider starring the repository.
+⭐ If you found this interesting, consider starring the repo.
